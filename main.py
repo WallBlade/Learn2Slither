@@ -26,6 +26,9 @@ class Game:
             self.place_buff()
             self.place_buff()
             self.place_debuff()
+            for row_idx, row in enumerate(self.board):
+                print(row)
+            self.get_adjacent_pos()
         
         def place_snake(self):
             # Place snake's head randomly on the board
@@ -36,6 +39,15 @@ class Game:
                     self.board[head_x][head_y] = 'H'
                     break
         
+        def place_body(self):
+            body_x = 0
+            
+        def get_adjacent_pos(self):
+            for row_idx, row in enumerate(self.board):
+                for col_idx, col in enumerate(row):
+                    if (self.board[row_idx][col_idx] == 'H'):
+                        print(self.board[row_idx + 1][col_idx + 1])
+            
         def place_buff(self):
             # Place one buff randomly on the board
             while True:
@@ -57,18 +69,20 @@ class Game:
         def draw(self, screen):
             # Draw the 10x10 board
             color_map = {
-                '0': 'white',
+                0: 'white',
                 'R': 'red',
                 'G': 'green',
                 'H': 'blue',
+                'W': 'orange',
             }
             rect_size = screen.get_width() / 10
             for row_idx, row in enumerate(self.board):
                 for col_idx, cell in enumerate(row):
-                    x = col_idx * rect_size
-                    y = row_idx * rect_size
-                    color = color_map.get(cell, 'black')
-                    pg.draw.rect(screen, color, (x, y, rect_size, rect_size))
+                    if (col_idx != 0 and col_idx != self.board_size - 1) and (row_idx != 0 and row_idx != self.board_size - 1):
+                        x = col_idx * rect_size
+                        y = row_idx * rect_size
+                        color = color_map.get(cell)
+                        pg.draw.rect(screen, color, (x, y, rect_size, rect_size), 1)
 
     board = Board()
 
