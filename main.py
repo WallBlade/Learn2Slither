@@ -2,6 +2,11 @@
 import pygame as pg
 import random as rd
 
+GREEN = "\033[32m"
+RED = "\033[31m"
+BLUE = "\033[34m"
+RESET = "\033[0m"
+
 class Game:
     # pygame setup
     pg.init()
@@ -12,26 +17,58 @@ class Game:
 
     class Board:
         def __init__(self):
-            # Create a 10x10 board filled with zeros
-            self.board_size = 10
-            self.board = [[0 for _ in range(self.board_size)] for _ in range(self.board_size)]
+            # Create a 12x12 board filled with empty '0' and surrounded by walls 'W'
+            self.board_size = 12
+            self.board = [['W' if x == 0 or x == self.board_size - 1 or y == 0 or y == self.board_size - 1 
+                       else 0 for x in range(self.board_size)] 
+                      for y in range(self.board_size)]
             self.place_snake()
+            self.place_buff()
+            self.place_buff()
+            self.place_debuff()
         
         def place_snake(self):
-            # Place the head of the snake randomly on the board
-            head_x = rd.randint(0, self.board_size - 1)
-            head_y = rd.randint(0, self.board_size - 1)
-            self.board[head_x][head_y] = 'H'
+            # Place snake's head randomly on the board
+            while True:
+                head_x = rd.randint(0, self.board_size - 3)
+                head_y = rd.randint(0, self.board_size - 3)
+                if self.board[head_x][head_y] == 0:
+                    self.board[head_x][head_y] = 'H'
+                    break
+        
+        def place_buff(self):
+            # Place one buff randomly on the board
+            while True:
+                buff_x = rd.randint(0, self.board_size - 3)
+                buff_y = rd.randint(0, self.board_size - 3)
+                if self.board[buff_x][buff_y] == 0:
+                    self.board[buff_x][buff_y] = 'G'
+                    break
+        
+        def place_debuff(self):
+            # Place one debuff randomly on the board
+            while True:
+                debuff_x = rd.randint(0, self.board_size - 3)
+                debuff_y = rd.randint(0, self.board_size - 3)
+                if self.board[debuff_x][debuff_y] == 0:
+                    self.board[debuff_x][debuff_y] = 'R'
+                    break
         
         def draw(self, screen):
             # Draw the 10x10 board
+            color_map = {
+                '0': 'white',
+                'R': 'red',
+                'G': 'green',
+                'H': 'blue',
+            }
             rect_size = screen.get_width() / 10
             for row_idx, row in enumerate(self.board):
                 for col_idx, cell in enumerate(row):
                     x = col_idx * rect_size
                     y = row_idx * rect_size
-                    color = "white" if cell == 0 else "blue" # Color depends on the cell value
-                    pg.draw.rect(screen, color, (x, y, rect_size, rect_size), 5)
+                    color = color_map.get(cell, 'black')
+                    pg.draw.rect(screen, color, (x, y, rect_size, rect_size))
 
     board = Board()
 
