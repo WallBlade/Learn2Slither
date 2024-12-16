@@ -28,7 +28,6 @@ class Game:
             self.place_debuff()
             for row_idx, row in enumerate(self.board):
                 print(row)
-            self.get_adjacent_pos()
         
         def place_snake(self):
             # Place snake's head randomly on the board
@@ -37,16 +36,33 @@ class Game:
                 head_y = rd.randint(0, self.board_size - 3)
                 if self.board[head_x][head_y] == 0:
                     self.board[head_x][head_y] = 'H'
+                    for _ in range(2):
+                        x, y = head_x, head_y
+                        valid_positions = self.get_adjacent_pos(x, y)
+                        if valid_positions:
+                            body_x, body_y = valid_positions[0]
+                            self.board[body_x][body_y] = 'S'
+                            x, y = body_x, body_y
                     break
-        
-        def place_body(self):
-            body_x = 0
             
-        def get_adjacent_pos(self):
-            for row_idx, row in enumerate(self.board):
-                for col_idx, col in enumerate(row):
-                    if (self.board[row_idx][col_idx] == 'H'):
-                        print(self.board[row_idx + 1][col_idx + 1])
+        def get_adjacent_pos(self, x, y):
+            """
+            Find valid adjacent positions to place the body of the snake.
+            Returns a list of valid coordinates (x, y).
+            """
+            # Possible relative directions: up, down, left, right
+            directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+            valid_positions = []
+
+            for dx, dy in directions:
+                new_x, new_y = x + dx, y + dy
+                
+                # Check if the position is within bounds and unoccupied
+                if 0 <= new_x < self.board_size and 0 <= new_y < self.board_size:
+                    if self.board[new_x][new_y] == 0:
+                        valid_positions.append((new_x, new_y))
+
+            return valid_positions
             
         def place_buff(self):
             # Place one buff randomly on the board
@@ -73,16 +89,16 @@ class Game:
                 'R': 'red',
                 'G': 'green',
                 'H': 'blue',
-                'W': 'orange',
+                'S': 'blue',
             }
             rect_size = screen.get_width() / 10
             for row_idx, row in enumerate(self.board):
                 for col_idx, cell in enumerate(row):
-                    if (col_idx != 0 and col_idx != self.board_size - 1) and (row_idx != 0 and row_idx != self.board_size - 1):
-                        x = col_idx * rect_size
-                        y = row_idx * rect_size
+                    if cell != 'W':
+                        x = (col_idx - 1) * rect_size
+                        y = (row_idx - 1) * rect_size
                         color = color_map.get(cell)
-                        pg.draw.rect(screen, color, (x, y, rect_size, rect_size), 1)
+                        pg.draw.rect(screen, color, (x, y, rect_size, rect_size))
 
     board = Board()
 
