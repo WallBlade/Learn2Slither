@@ -1,6 +1,7 @@
 # Example file showing a circle moving on screen
 import pygame as pg
 import random as rd
+import sys
 
 GREEN = "\033[32m"
 RED = "\033[31m"
@@ -14,6 +15,7 @@ class Game:
         self.screen = pg.display.set_mode((720, 720))
         self.clock = pg.time.Clock()
         self.running = True
+        self.pause = False
         self.dt = 0
         self.run_game()
 
@@ -132,7 +134,7 @@ class Game:
         if event.key == pg.K_d:
             return (0, 1) if snake_dir != (0, -1) else snake_dir
         if event.key == pg.K_q or event.key == pg.K_ESCAPE:
-            self.running = False
+            self.pause = True
         return snake_dir
 
     def handle_collision(self, cell, snake, plan, tail, board):
@@ -152,6 +154,9 @@ class Game:
             return
         plan[tail[0]][tail[1]] = 0
         snake.pop()
+
+    # def display_menu(self):
+
 
     def run_game(self):
         board = self.Board()
@@ -173,19 +178,23 @@ class Game:
                 if event.type == pg.KEYDOWN:
                     snake_dir = self.move(event, snake_dir)
 
-            plan[y][x] = 'S'
-            y += snake_dir[0]
-            x += snake_dir[1]
-            tail = snake[-1]
-
-            # Check for collision
-            if plan[y][x] in ('W', 'S'):
-                self.running = False
-            else:
+            if not self.pause:
+                plan[y][x] = 'S'
+                y += snake_dir[0]
+                x += snake_dir[1]
                 tail = snake[-1]
-                self.handle_collision(plan[y][x], snake, plan, tail, board)
-                plan[y][x] = 'H'
-                snake.insert(0, (y, x))
+
+                # Check for collision
+                if plan[y][x] in ('W', 'S'):
+                    self.running = False
+                else:
+                    tail = snake[-1]
+                    self.handle_collision(plan[y][x], snake, plan, tail, board)
+                    plan[y][x] = 'H'
+                    snake.insert(0, (y, x))
+            else:
+                # self.display_menu()
+                print('OKOK')
 
             board.draw(self.screen)
 
