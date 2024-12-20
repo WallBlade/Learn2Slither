@@ -14,6 +14,7 @@ class Game:
         pg.init()
         self.screen = pg.display.set_mode((720, 720))
         self.clock = pg.time.Clock()
+        self.selected_option = 0
         self.running = True
         self.pause = False
         self.dt = 0
@@ -155,8 +156,44 @@ class Game:
         plan[tail[0]][tail[1]] = 0
         snake.pop()
 
-    # def display_menu(self):
+    def display_menu(self, events):
+        # Define menu options
+        menu_options = ['Resume', 'Restart', 'Quit']
+        num_options = len(menu_options)
 
+        # Create font
+        font = pg.font.Font(None, 74)
+
+        # Handle events for navigation
+        for event in events:
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_UP:
+                    self.selected_option = (self.selected_option - 1) % num_options
+                elif event.key == pg.K_DOWN:
+                    self.selected_option = (self.selected_option + 1) % num_options
+                elif event.key == pg.K_RETURN:
+                    if self.selected_option == 0:
+                        self.pause = False
+                    elif self.selected_option == 1:
+                        # self.reset_game()
+                        print(f"{GREEN}To use this button, you need to implement reset_game() function{RESET}")
+                    elif self.selected_option == 2:
+                        self.running = False
+
+        self.screen.fill((255, 255, 255))
+
+        for i, option in enumerate(menu_options):
+            # Highlight the selected option
+            if i == self.selected_option:
+                color = (50, 255, 50)  # Green for selected
+            else:
+                color = (0, 0, 0)  # White for unselected
+
+            text = font.render(option, True, color)
+            self.screen.blit(text, (100, 100 + i * 100))
+
+        # Update the display
+        pg.display.flip()
 
     def run_game(self):
         board = self.Board()
@@ -172,7 +209,9 @@ class Game:
         y, x = head
         
         while self.running:
-            for event in pg.event.get():
+            events = pg.event.get()
+
+            for event in events:
                 if event.type == pg.QUIT:
                     self.running = False
                 if event.type == pg.KEYDOWN:
@@ -192,14 +231,12 @@ class Game:
                     self.handle_collision(plan[y][x], snake, plan, tail, board)
                     plan[y][x] = 'H'
                     snake.insert(0, (y, x))
+                    board.draw(self.screen)
             else:
-                # self.display_menu()
-                print('OKOK')
-
-            board.draw(self.screen)
+                self.display_menu(events)
 
             pg.display.flip()
-            self.dt = self.clock.tick(5) / 1000
+            self.dt = self.clock.tick(2) / 1000
     pg.quit()
 
 def main():
