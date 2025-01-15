@@ -175,8 +175,7 @@ class Game:
                     if self.selected_option == 0:
                         self.pause = False
                     elif self.selected_option == 1:
-                        # self.reset_game()
-                        print(f"{GREEN}To use this button, you need to implement reset_game() function{RESET}")
+                        self.reset_game()
                     elif self.selected_option == 2:
                         self.running = False
 
@@ -194,6 +193,10 @@ class Game:
 
         # Update the display
         pg.display.flip()
+
+    def reset_game(self):
+        self.pause = False
+        self.run_game()
 
     def run_game(self):
         board = self.Board()
@@ -236,7 +239,7 @@ class Game:
                 self.display_menu(events)
 
             pg.display.flip()
-            self.dt = self.clock.tick(2) / 1000
+            self.dt = self.clock.tick(5) / 1000
     pg.quit()
 
 def main():
