@@ -198,6 +198,22 @@ class Game:
         self.pause = False
         self.run_game()
 
+    def get_vision(self, plan, y, x):
+        rows, cols = len(plan), len(plan[0])
+
+        # Print upward vision
+        for i in range(y - 1, -1, -1):
+            print(plan[i][x])
+
+        # Print the row at the snake's position (left and right vision)
+        print(plan[y])
+
+        # Print downward vision
+        for i in range(y + 1, rows):
+            print(plan[i][x])
+
+        print("----------------------------------------")
+
     def run_game(self):
         board = self.Board()
         plan = board.board
@@ -229,10 +245,12 @@ class Game:
                 # Check for collision
                 if plan[y][x] in ('W', 'S'):
                     self.running = False
+                    sys.exit()
                 else:
-                    tail = snake[-1]
                     self.handle_collision(plan[y][x], snake, plan, tail, board)
                     plan[y][x] = 'H'
+                    self.get_vision(plan, y, x)
+                    tail = snake[-1]
                     snake.insert(0, (y, x))
                     board.draw(self.screen)
             else:
