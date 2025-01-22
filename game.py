@@ -14,27 +14,30 @@ class Game:
     # pygame setup
     def __init__(self):
         pg.init()
-        self.screen = pg.display.set_mode((500, 500))
+        self.screen = pg.display.set_mode((600, 650), pg.NOFRAME)
         self.clock = pg.time.Clock()
         self.selected_option = 0
         self.running = True
         self.pause = False
-        self.font = pg.font.Font(None, 36)
+        self.direction_updated = False
+        self.font = pg.font.Font('font/PressStart2P-Regular.ttf', 16)
         self.dt = 0
         self.score = 0
         self.run_game()
 
     def move(self, event, snake_dir):
-        if event.key == pg.K_w:
-            return (-1, 0) if snake_dir != (1, 0) else snake_dir
-        if event.key == pg.K_s:
-            return (1, 0) if snake_dir != (-1, 0) else snake_dir
-        if event.key == pg.K_a:
-            return (0, -1) if snake_dir != (0, 1) else snake_dir
-        if event.key == pg.K_d:
-            return (0, 1) if snake_dir != (0, -1) else snake_dir
-        if event.key == pg.K_q or event.key == pg.K_ESCAPE:
-            self.pause = True
+        if not self.direction_updated:
+            self.direction_updated = True
+            if event.key == pg.K_w:
+                return (-1, 0) if snake_dir != (1, 0) else snake_dir
+            if event.key == pg.K_s:
+                return (1, 0) if snake_dir != (-1, 0) else snake_dir
+            if event.key == pg.K_a:
+                return (0, -1) if snake_dir != (0, 1) else snake_dir
+            if event.key == pg.K_d:
+                return (0, 1) if snake_dir != (0, -1) else snake_dir
+            if event.key == pg.K_q or event.key == pg.K_ESCAPE:
+                self.pause = True
         return snake_dir
 
     def handle_collision(self, cell, snake, plan, tail, board):
@@ -44,9 +47,11 @@ class Game:
         if cell == 'R':
             if len(snake) == 1:
                 self.running = False
+                return
             else:
                 plan[tail[0]][tail[1]] = 0
                 snake.pop()
+                # if len(snake) >= 2:
                 tail = snake[-1]
                 board.place_debuff()
                 self.score -= 1
@@ -77,17 +82,17 @@ class Game:
                     elif self.selected_option == 2:
                         self.running = False
 
-        self.screen.fill((255, 255, 255))
+        self.screen.fill('#CFE1BB')
 
         for i, option in enumerate(menu_options):
             # Highlight the selected option
             if i == self.selected_option:
-                color = (50, 255, 50)  # Green for selected
+                color = '#738357'  # Selected
             else:
-                color = (0, 0, 0)  # White for unselected
+                color = '#000000'  # Unselected
 
             text = self.font.render(option, True, color)
-            self.screen.blit(text, (100, 100 + i * 100))
+            self.screen.blit(text, (100, 50 + i * 50))
 
         # Update the display
         pg.display.flip()
@@ -97,7 +102,7 @@ class Game:
         Render the score on the screen.
         """
         score_surface = self.font.render(f"Score: {self.score}", True, (0, 0, 0))
-        self.screen.blit(score_surface, (200, 10))
+        self.screen.blit(score_surface, (10, 15))
 
     def reset_game(self):
         self.score = 0
@@ -156,15 +161,17 @@ class Game:
                     self.handle_collision(plan[y][x], snake, plan, tail, board)
                     plan[y][x] = 'H'
                     self.get_vision(plan, y, x)
-                    tail = snake[-1]
+                    if len(snake) >= 2:
+                        tail = snake[-1]
                     snake.insert(0, (y, x))
                     board.draw(self.screen)
                 self.draw_score()
+                self.direction_updated = False
             else:
                 self.draw_menu(events)
 
             pg.display.flip()
-            self.dt = self.clock.tick(5) / 1000
+            self.dt = self.clock.tick(4) / 1000
     pg.quit()
 
 def main():

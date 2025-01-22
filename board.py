@@ -6,6 +6,7 @@ class Board:
             # Create a 12x12 board filled with empty '0'
             # and surrounded by walls 'W'
             self.board_size = 12
+            self.score_size = 50
             self.snake = []
             self.board = [['W' if x == 0 or x == self.board_size - 1
                            or y == 0 or y == self.board_size - 1 
@@ -90,18 +91,24 @@ class Board:
     
     def draw(self, screen):
         # Draw the 10x10 board
+        screen.fill('#CFE1BB')
+
+        # Define the color map
         color_map = {
-            0: 'white',
+            0: '#B6C99B',
             'R': 'red',
             'G': 'green',
-            'H': 'blue',
-            'S': 'blue',
+            'H': 'black',
+            'S': 'black',
+            'W': '#88986C',
         }
-        rect = screen.get_width() / 10
+        rect_size = screen.get_width() / 12  # Size of each cell
+        padding = 2  # Padding between cells
+
+        # Draw the board
         for row_idx, row in enumerate(self.board):
             for col_idx, cell in enumerate(row):
-                if cell != 'W':
-                    x = (col_idx - 1) * rect
-                    y = (row_idx - 1) * rect
-                    color = color_map.get(cell)
-                    pg.draw.rect(screen, color, (x, y, rect, rect))
+                x = col_idx * rect_size + padding
+                y = row_idx * rect_size + padding + self.score_size
+                color = color_map.get(cell, 'white')  # Couleur de la case
+                pg.draw.rect(screen, color, (x, y, rect_size - padding, rect_size - padding))
