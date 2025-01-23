@@ -8,6 +8,7 @@ class Board:
             self.board_size = 12
             self.score_size = 50
             self.snake = []
+            self.tail = []
             self.board = [['W' if x == 0 or x == self.board_size - 1
                            or y == 0 or y == self.board_size - 1 
                        else 0 for x in range(self.board_size)] 
@@ -51,6 +52,8 @@ class Board:
                             # Update current position for the next segment
                             curr_pos = (new_y, new_x)
                             self.snake.append(curr_pos)
+                            if _ == 1:
+                                self.tail = curr_pos
                     else:
                         break
                 break

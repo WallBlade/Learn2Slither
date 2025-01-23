@@ -1,6 +1,7 @@
 # Example file showing a circle moving on screen
 import pygame as pg
 import random as rd
+from agent import Agent
 import sys
 
 from board import Board
@@ -19,26 +20,46 @@ class Game:
         self.selected_option = 0
         self.running = True
         self.pause = False
-        self.direction_updated = False
         self.font = pg.font.Font('font/PressStart2P-Regular.ttf', 16)
         self.dt = 0
         self.score = 0
         self.run_game()
 
-    def move(self, event, snake_dir):
-        if not self.direction_updated:
-            self.direction_updated = True
-            if event.key == pg.K_w:
-                return (-1, 0) if snake_dir != (1, 0) else snake_dir
-            if event.key == pg.K_s:
-                return (1, 0) if snake_dir != (-1, 0) else snake_dir
-            if event.key == pg.K_a:
-                return (0, -1) if snake_dir != (0, 1) else snake_dir
-            if event.key == pg.K_d:
-                return (0, 1) if snake_dir != (0, -1) else snake_dir
-            if event.key == pg.K_q or event.key == pg.K_ESCAPE:
-                self.pause = True
+    def get_direction(self, event, snake_dir):
+        if event.key == pg.K_w:
+            return (-1, 0)
+        if event.key == pg.K_s:
+            return (1, 0)
+        if event.key == pg.K_a:
+            return (0, -1)
+        if event.key == pg.K_d:
+            return (0, 1)
+        if event.key == pg.K_q or event.key == pg.K_ESCAPE:
+            self.pause = True
         return snake_dir
+
+    def move(self, snake_dir, snake, plan, board):
+        head = snake[0]
+        y, x = head
+        dy, dx = snake_dir
+        new_y, new_x = y + dy, x + dx
+
+        # Check if the new position is valid
+        if plan[new_y][new_x] == 'W' or plan[new_y][new_x] == 'S':
+            self.running = False
+            return
+
+        # Check if the new position is a buff or debuff
+        # if plan[new_y][new_x] == 'G' or plan[new_y][new_x] == 'R':
+        #     self.handle_collision(plan[new_y][new_x], snake, plan, snake[-1], board)
+
+        # Update the snake's position
+        plan[new_y][new_x] = 'H'
+        snake.insert(0, (new_y, new_x))
+
+        # Update the tail position
+        tail = snake.pop()
+        plan[tail[0]][tail[1]] = 0
 
     def handle_collision(self, cell, snake, plan, tail, board):
         """
@@ -51,7 +72,6 @@ class Game:
             else:
                 plan[tail[0]][tail[1]] = 0
                 snake.pop()
-                # if len(snake) >= 2:
                 tail = snake[-1]
                 board.place_debuff()
                 self.score -= 1
@@ -141,37 +161,21 @@ class Game:
         while self.running:
             events = pg.event.get()
 
-            for event in events:
-                if event.type == pg.QUIT:
-                    self.running = False
-                if event.type == pg.KEYDOWN:
-                    snake_dir = self.move(event, snake_dir)
-
             if not self.pause:
-                plan[y][x] = 'S'
-                y += snake_dir[0]
-                x += snake_dir[1]
-                tail = snake[-1]
-
-                # Check for collision
-                if plan[y][x] in ('W', 'S'):
-                    self.running = False
-                    sys.exit()
-                else:
-                    self.handle_collision(plan[y][x], snake, plan, tail, board)
-                    plan[y][x] = 'H'
-                    self.get_vision(plan, y, x)
-                    if len(snake) >= 2:
-                        tail = snake[-1]
-                    snake.insert(0, (y, x))
-                    board.draw(self.screen)
+                for event in events:
+                    if event.type == pg.QUIT:
+                        self.running = False
+                    if event.type == pg.KEYDOWN:
+                        snake_dir = self.get_direction(event, snake_dir)
+                        self.move(snake_dir, snake, plan, board)
+                        
+                board.draw(self.screen)
                 self.draw_score()
-                self.direction_updated = False
             else:
                 self.draw_menu(events)
 
             pg.display.flip()
-            self.dt = self.clock.tick(4) / 1000
+            self.dt = self.clock.tick(50) / 1000
     pg.quit()
 
 def main():
