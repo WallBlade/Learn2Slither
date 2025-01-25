@@ -13,9 +13,11 @@ RESET = "\033[0m"
 
 class Game:
     # pygame setup
-    def __init__(self):
+    def __init__(self, w=600, h=650):
         pg.init()
-        self.screen = pg.display.set_mode((600, 650), pg.NOFRAME)
+        self.w = w
+        self.h = h
+        self.screen = pg.display.set_mode((self.w, self.h), pg.NOFRAME)
         self.clock = pg.time.Clock()
         self.selected_option = 0
         self.running = True
@@ -25,62 +27,84 @@ class Game:
         self.score = 0
         self.run_game()
 
-    def get_direction(self, event, snake_dir):
+    def get_new_direction(self, event):
+        """Determine the new direction based on key press."""
         if event.key == pg.K_w:
             return (-1, 0)
-        if event.key == pg.K_s:
+        elif event.key == pg.K_s:
             return (1, 0)
-        if event.key == pg.K_a:
+        elif event.key == pg.K_a:
             return (0, -1)
-        if event.key == pg.K_d:
+        elif event.key == pg.K_d:
             return (0, 1)
-        if event.key == pg.K_q or event.key == pg.K_ESCAPE:
-            self.pause = True
-        return snake_dir
+        return None
 
-    def move(self, snake_dir, snake, plan, board):
-        head = snake[0]
-        y, x = head
-        dy, dx = snake_dir
-        new_y, new_x = y + dy, x + dx
+    def is_valid_move(self, snake, new_target):
+        """Check if the move is valid (not reversing into self)."""
+        return len(snake) <= 1 or new_target == snake[1]
 
-        # Check if the new position is valid
+    def handle_collision(self, plan, new_y, new_x, snake, board):
+        """Handle different types of collisions and board interactions."""
+        # Wall or snake body collision
         if plan[new_y][new_x] == 'W' or plan[new_y][new_x] == 'S':
             self.running = False
-            return
+            return False
 
-        # Check if the new position is a buff or debuff
-        # if plan[new_y][new_x] == 'G' or plan[new_y][new_x] == 'R':
-        #     self.handle_collision(plan[new_y][new_x], snake, plan, snake[-1], board)
+        # Debuff collision
+        if plan[new_y][new_x] == 'R':
+            if len(snake) == 1:
+                self.running = False
+                return False
+            else:
+                plan[snake[-1][0]][snake[-1][1]] = 0
+                snake.pop()
+                board.place_debuff()
+                self.score -= 1
 
-        # Update the snake's position
+        # Goal collision
+        if plan[new_y][new_x] == 'G':
+            board.place_buff()
+            self.score += 1
+            return True
+
+        # Regular move
+        return True
+
+    def update_snake_position(self, plan, snake, new_y, new_x):
+        """Update snake position on the board."""
+        # Remove tail if not growing
+        if plan[new_y][new_x] != 'G':
+            tail = snake.pop()
+            plan[tail[0]][tail[1]] = 0
+
+        # Update head position
         plan[new_y][new_x] = 'H'
         snake.insert(0, (new_y, new_x))
 
-        # Update the tail position
-        tail = snake.pop()
-        plan[tail[0]][tail[1]] = 0
-
-    def handle_collision(self, cell, snake, plan, tail, board):
-        """
-        Handles collisions based on the cell type.
-        """
-        if cell == 'R':
-            if len(snake) == 1:
-                self.running = False
-                return
-            else:
-                plan[tail[0]][tail[1]] = 0
-                snake.pop()
-                tail = snake[-1]
-                board.place_debuff()
-                self.score -= 1
-        elif cell == 'G':
-            board.place_buff()
-            self.score += 1
+    def move(self, event, snake_dir, snake, plan, board):
+        """Main move method coordinating snake movement."""
+        # Get new direction
+        new_dir = self.get_new_direction(event)
+        if new_dir is None:
             return
-        plan[tail[0]][tail[1]] = 0
-        snake.pop()
+
+        # Calculate new position
+        head = snake[0]
+        y, x = head
+        target = (y + new_dir[0], x + new_dir[1])
+
+        # Validate move
+        if not self.is_valid_move(snake, target):
+            return
+
+        # Calculate new coordinates
+        dy, dx = new_dir
+        new_y, new_x = y + dy, x + dx
+
+        # Handle collision and movement
+        if self.handle_collision(plan, new_y, new_x, snake, board):
+            self.update_snake_position(plan, snake, new_y, new_x)
+
 
     def draw_menu(self, events):
         # Define menu options
@@ -166,9 +190,13 @@ class Game:
                     if event.type == pg.QUIT:
                         self.running = False
                     if event.type == pg.KEYDOWN:
-                        snake_dir = self.get_direction(event, snake_dir)
-                        self.move(snake_dir, snake, plan, board)
-                        
+                        if event.key == pg.K_q or event.key == pg.K_ESCAPE:
+                            self.pause = True
+                        else:
+                            self.move(event, snake_dir, snake, plan, board)
+                        print(f"Score: {self.score}")
+                        board.print_board()    
+
                 board.draw(self.screen)
                 self.draw_score()
             else:

@@ -1,5 +1,7 @@
 import pygame as pg
 import random as rd
+import colorama
+from colorama import Back, Style
 
 class Board:
     def __init__(self):
@@ -92,6 +94,37 @@ class Board:
                 self.board[debuff_x][debuff_y] = 'R'
                 break
     
+    
+    def print_board(self):
+        """
+        Print the game board with colored representations
+        
+        Symbols:
+        - 'W': Wall (White background)
+        - 'H': Snake Head (Green background)
+        - 'G': Buff (Yellow background)
+        - 'R': Debuff (Red background)
+        - 'S': Snake Body (Blue background)
+        - 0: Empty space (Default)
+        """
+        for row in self.board:
+            row_display = []
+            for cell in row:
+                if cell == 'W':
+                    row_display.append(f"{Back.WHITE}  {Style.RESET_ALL}")
+                elif cell == 'H':
+                    row_display.append(f"{Back.GREEN}  {Style.RESET_ALL}")
+                elif cell == 'G':
+                    row_display.append(f"{Back.YELLOW}  {Style.RESET_ALL}")
+                elif cell == 'R':
+                    row_display.append(f"{Back.RED}  {Style.RESET_ALL}")
+                elif cell == 'S':
+                    row_display.append(f"{Back.BLUE}  {Style.RESET_ALL}")
+                else:
+                    row_display.append(f"{Back.BLACK}  {Style.RESET_ALL}")
+            print(''.join(row_display))
+        print('\n')
+    
     def draw(self, screen):
         # Draw the 10x10 board
         screen.fill('#CFE1BB')
@@ -111,7 +144,7 @@ class Board:
         # Draw the board
         for row_idx, row in enumerate(self.board):
             for col_idx, cell in enumerate(row):
-                x = col_idx * rect_size + padding
-                y = row_idx * rect_size + padding + self.score_size
+                x = col_idx * rect_size
+                y = row_idx * rect_size + self.score_size
                 color = color_map.get(cell, 'white')  # Couleur de la case
-                pg.draw.rect(screen, color, (x, y, rect_size - padding, rect_size - padding))
+                pg.draw.rect(screen, color, (x, y, rect_size, rect_size))
