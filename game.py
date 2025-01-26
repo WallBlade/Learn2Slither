@@ -41,7 +41,9 @@ class Game:
 
     def is_valid_move(self, snake, new_target):
         """Check if the move is valid (not reversing into self)."""
-        return len(snake) <= 1 or new_target == snake[1]
+        if len(snake) == 1:
+            return
+        return new_target == snake[1]
 
     def handle_collision(self, plan, new_y, new_x, snake, board):
         """Handle different types of collisions and board interactions."""
@@ -56,12 +58,12 @@ class Game:
                 self.running = False
                 return False
             else:
-                plan[snake[-1][0]][snake[-1][1]] = 0
-                snake.pop()
+                tail = snake.pop()
+                plan[tail[0]][tail[1]] = 0
                 board.place_debuff()
                 self.score -= 1
 
-        # Goal collision
+        # Buff collision
         if plan[new_y][new_x] == 'G':
             board.place_buff()
             self.score += 1
@@ -81,7 +83,7 @@ class Game:
         plan[new_y][new_x] = 'H'
         snake.insert(0, (new_y, new_x))
 
-    def move(self, event, snake_dir, snake, plan, board):
+    def move(self, event, snake, plan, board):
         """Main move method coordinating snake movement."""
         # Get new direction
         new_dir = self.get_new_direction(event)
@@ -94,8 +96,11 @@ class Game:
         target = (y + new_dir[0], x + new_dir[1])
 
         # Validate move
-        if not self.is_valid_move(snake, target):
+        if self.is_valid_move(snake, target):
             return
+
+        # Replace old head with body
+        plan[y][x] = 'S'
 
         # Calculate new coordinates
         dy, dx = new_dir
@@ -180,7 +185,6 @@ class Game:
         
         # Pick a random valid direction
         snake_dir = rd.choice(valid_directions) if valid_directions else (0, 1)
-        y, x = head
         
         while self.running:
             events = pg.event.get()
@@ -193,7 +197,7 @@ class Game:
                         if event.key == pg.K_q or event.key == pg.K_ESCAPE:
                             self.pause = True
                         else:
-                            self.move(event, snake_dir, snake, plan, board)
+                            self.move(event, snake, plan, board)
                         print(f"Score: {self.score}")
                         board.print_board()    
 
