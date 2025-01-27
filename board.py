@@ -136,6 +136,28 @@ class Board:
             print(''.join(row_display))
         print('\n')
     
+    def get_state(self):
+        y, x = self.snake[0]
+
+        col_cells = self.get_col(x, y)
+        row_cells = self.get_row(x, y)
+        print(col_cells)
+        print(row_cells)
+    
+    def get_row(self, x, y):
+        row = self.board[y]
+
+        return {
+            'west': row[:x],
+            'east': row[x+1:]
+        }
+
+    def get_col(self, x, y):
+        return {
+            'north': [self.board[i][x] for i in range(y)],
+            'south': [self.board[i][x] for i in range(y+1, self.board_size)]
+        }
+    
     def draw(self):
         # Draw the 10x10 board
         self.screen.fill('#CFE1BB')
@@ -149,7 +171,7 @@ class Board:
             'S': 'black',
             'W': '#88986C',
         }
-        rect_size = self.screen.get_width() / self.board_size  # Size of each cell
+        rect_size = self.screen.get_width() / self.board_size
 
         # Draw the board
         for row_idx, row in enumerate(self.board):

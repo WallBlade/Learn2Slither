@@ -172,7 +172,6 @@ class Game:
         self.board.init_board()
         self.pause = False
         self.running = True
-        # self.run_game()
 
     def run_human_mode(self):
         while self.running:
@@ -212,6 +211,7 @@ class Game:
                             if event.key == pg.K_q or event.key == pg.K_ESCAPE:
                                 self.pause = True
                     # Get the next move from the agent
+                    state = self.board.get_state()
                     action = agent.take_action()
                     if action is None:
                         self.running = False
@@ -228,7 +228,7 @@ class Game:
                     self.draw_menu(events)
 
                 pg.display.flip()
-                self.dt = self.clock.tick(20) / 1000
+                self.dt = self.clock.tick(1) / 1000
 
     def run_game(self):
         if self.args.mode == 'human':
