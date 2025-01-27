@@ -1,3 +1,5 @@
+import random as rd
+
 class Agent:
     def __init__(self, sessions=10, save_path='models/default_model.txt'):
         self.sessions = sessions
@@ -8,17 +10,18 @@ class Agent:
         self.epsilon = 0.5
         self.epsilon_decay = 0.999
 
-    def choose_action(self, state):
+    def choose_action(self ):
         """
         Choose an action based on the current state.
         Use an epsilon-greedy approach.
         """
         pass # Implement action selection logic
     
-    def take_action(self, state, action):
+    def take_action(self):
         """
         Take an action and return the next state and reward.
         """
+        return rd.randint(0, 3)
         pass # Implement action taking logic
 
     def update_q_table(self, state, action, reward, next_state):

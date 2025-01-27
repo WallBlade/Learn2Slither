@@ -13,30 +13,42 @@ RESET = "\033[0m"
 
 class Game:
     # pygame setup
-    def __init__(self, w=600, h=650):
+    def __init__(self, args):
         pg.init()
-        self.w = w
-        self.h = h
-        self.screen = pg.display.set_mode((self.w, self.h), pg.NOFRAME)
+        self.args = args
+        self.board = Board(args.board_size, args.w, args.h)
         self.clock = pg.time.Clock()
-        self.selected_option = 0
         self.running = True
         self.pause = False
-        self.font = pg.font.Font('font/PressStart2P-Regular.ttf', 16)
+        self.selected_option = 0
         self.dt = 0
         self.score = 0
-        self.run_game()
 
-    def get_new_direction(self, event):
+    def get_new_direction(self, action):
         """Determine the new direction based on key press."""
-        if event.key == pg.K_w:
-            return (-1, 0)
-        elif event.key == pg.K_s:
-            return (1, 0)
-        elif event.key == pg.K_a:
-            return (0, -1)
-        elif event.key == pg.K_d:
-            return (0, 1)
+        DIRECTIONS = {
+            'UP': (-1, 0),
+            'DOWN': (1, 0),
+            'LEFT': (0, -1),
+            'RIGHT': (0, 1)
+        }
+
+        if isinstance(action, int):
+            return {
+                0: DIRECTIONS['UP'],
+                1: DIRECTIONS['DOWN'],
+                2: DIRECTIONS['LEFT'],
+                3: DIRECTIONS['RIGHT']
+            }.get(action, None)
+
+        if hasattr(action, 'key'):
+            return {
+                pg.K_w: DIRECTIONS['UP'],
+                pg.K_s: DIRECTIONS['DOWN'],
+                pg.K_a: DIRECTIONS['LEFT'],
+                pg.K_d: DIRECTIONS['RIGHT']
+            }.get(action.key, None)
+        
         return None
 
     def is_valid_move(self, snake, new_target):
@@ -45,7 +57,7 @@ class Game:
             return
         return new_target == snake[1]
 
-    def handle_collision(self, plan, new_y, new_x, snake, board):
+    def handle_collision(self, plan, new_y, new_x, snake):
         """Handle different types of collisions and board interactions."""
         # Wall or snake body collision
         if plan[new_y][new_x] == 'W' or plan[new_y][new_x] == 'S':
@@ -60,12 +72,12 @@ class Game:
             else:
                 tail = snake.pop()
                 plan[tail[0]][tail[1]] = 0
-                board.place_debuff()
+                self.board.place_debuff()
                 self.score -= 1
 
         # Buff collision
         if plan[new_y][new_x] == 'G':
-            board.place_buff()
+            self.board.place_buff()
             self.score += 1
             return True
 
@@ -83,10 +95,10 @@ class Game:
         plan[new_y][new_x] = 'H'
         snake.insert(0, (new_y, new_x))
 
-    def move(self, event, snake, plan, board):
+    def move(self, action, snake, plan):
         """Main move method coordinating snake movement."""
         # Get new direction
-        new_dir = self.get_new_direction(event)
+        new_dir = self.get_new_direction(action)
         if new_dir is None:
             return
 
@@ -107,10 +119,9 @@ class Game:
         new_y, new_x = y + dy, x + dx
 
         # Handle collision and movement
-        if self.handle_collision(plan, new_y, new_x, snake, board):
+        if self.handle_collision(plan, new_y, new_x, snake):
             self.update_snake_position(plan, snake, new_y, new_x)
-
-
+    
     def draw_menu(self, events):
         # Define menu options
         menu_options = ['Resume', 'Restart', 'Quit']
@@ -128,10 +139,13 @@ class Game:
                         self.pause = False
                     elif self.selected_option == 1:
                         self.reset_game()
+                        return
                     elif self.selected_option == 2:
                         self.running = False
+                        pg.quit()
+                        sys.exit()
 
-        self.screen.fill('#CFE1BB')
+        self.board.screen.fill('#CFE1BB')
 
         for i, option in enumerate(menu_options):
             # Highlight the selected option
@@ -140,8 +154,8 @@ class Game:
             else:
                 color = '#000000'  # Unselected
 
-            text = self.font.render(option, True, color)
-            self.screen.blit(text, (100, 50 + i * 50))
+            text = self.board.font.render(option, True, color)
+            self.board.screen.blit(text, (100, 50 + i * 50))
 
         # Update the display
         pg.display.flip()
@@ -150,68 +164,74 @@ class Game:
         """
         Render the score on the screen.
         """
-        score_surface = self.font.render(f"Score: {self.score}", True, (0, 0, 0))
-        self.screen.blit(score_surface, (10, 15))
-
+        score_surface = self.board.font.render(f"Score: {self.score}", True, (0, 0, 0))
+        self.board.screen.blit(score_surface, (10, 15))
+    
     def reset_game(self):
         self.score = 0
+        self.board.init_board()
         self.pause = False
-        self.run_game()
+        self.running = True
+        # self.run_game()
 
-    def get_vision(self, plan, y, x):
-        rows, cols = len(plan), len(plan[0])
-
-        # Print upward vision
-        for i in range(y - 1, -1, -1):
-            print(plan[i][x])
-
-        # Print the row at the snake's position (left and right vision)
-        print(plan[y])
-
-        # Print downward vision
-        for i in range(y + 1, rows):
-            print(plan[i][x])
-
-        print("----------------------------------------")
-
-    def run_game(self):
-        board = Board()
-        plan = board.board
-        snake = board.snake
-        
-        # Get valid directions for the snake's initial movement
-        head = snake[0]
-        valid_directions = board.get_adjacent_pos(head)
-        
-        # Pick a random valid direction
-        snake_dir = rd.choice(valid_directions) if valid_directions else (0, 1)
-        
+    def run_human_mode(self):
         while self.running:
             events = pg.event.get()
 
             if not self.pause:
                 for event in events:
-                    if event.type == pg.QUIT:
-                        self.running = False
                     if event.type == pg.KEYDOWN:
                         if event.key == pg.K_q or event.key == pg.K_ESCAPE:
                             self.pause = True
                         else:
-                            self.move(event, snake, plan, board)
+                            self.move(event, self.board.snake, self.board.board)
                         print(f"Score: {self.score}")
-                        board.print_board()    
+                        self.board.print_board()    
 
-                board.draw(self.screen)
+                self.board.draw()
                 self.draw_score()
             else:
                 self.draw_menu(events)
 
             pg.display.flip()
             self.dt = self.clock.tick(50) / 1000
-    pg.quit()
+    
+    def run_ai_mode(self):
+        agent = Agent()
 
-def main():
-    Game()
+        for _ in range(100):
+            print(f"iteration: {_}")
+            if not self.running:
+                self.reset_game()
+            while self.running:
+                events = pg.event.get()
 
-if __name__ == '__main__':
-    main()
+                if not self.pause:
+                    for event in events:
+                        if event.type == pg.KEYDOWN:
+                            if event.key == pg.K_q or event.key == pg.K_ESCAPE:
+                                self.pause = True
+                    # Get the next move from the agent
+                    action = agent.take_action()
+                    if action is None:
+                        self.running = False
+                        break
+
+                    # Make the move
+                    self.move(action, self.board.snake, self.board.board)
+                    print(f"Score: {self.score}")
+                    self.board.print_board()
+
+                    self.board.draw()
+                    self.draw_score()
+                else:
+                    self.draw_menu(events)
+
+                pg.display.flip()
+                self.dt = self.clock.tick(20) / 1000
+
+    def run_game(self):
+        if self.args.mode == 'human':
+            self.run_human_mode()
+        else:
+            self.run_ai_mode()

@@ -4,24 +4,36 @@ import colorama
 from colorama import Back, Style
 
 class Board:
-    def __init__(self):
+    def __init__(self, board_size=12, w=600, h=600):
             # Create a 12x12 board filled with empty '0'
             # and surrounded by walls 'W'
-            self.board_size = 12
+            self.board_size = board_size
             self.score_size = 50
+            self.screen = pg.display.set_mode((w, h + self.score_size), pg.NOFRAME)
+            self.font = pg.font.Font('font/PressStart2P-Regular.ttf', 16)
             self.snake = []
             self.tail = []
-            self.board = [['W' if x == 0 or x == self.board_size - 1
-                           or y == 0 or y == self.board_size - 1 
-                       else 0 for x in range(self.board_size)] 
-                      for y in range(self.board_size)]
-            self.place_snake()
-            self.place_buff()
-            self.place_buff()
-            self.place_debuff()
-            # for row_idx, row in enumerate(self.board):
-            #     print(row)
+            self.init_board()
         
+    def create_board(self):
+        # Create a 12x12 board filled with empty '0'
+        # and surrounded by walls 'W'
+        board = [['W' if x == 0 or x == self.board_size - 1
+                       or y == 0 or y == self.board_size - 1 
+                   else 0 for x in range(self.board_size)] 
+                  for y in range(self.board_size)]
+        return board
+    
+    def init_board(self):
+        # Reset the board to its initial state
+        self.board = self.create_board()
+        self.snake = []
+        self.tail = []
+        self.place_snake()
+        self.place_buff()
+        self.place_buff()
+        self.place_debuff()
+
     def place_snake(self):
         # Place snake's head randomly on the board
         while True:
@@ -94,7 +106,6 @@ class Board:
                 self.board[debuff_x][debuff_y] = 'R'
                 break
     
-    
     def print_board(self):
         """
         Print the game board with colored representations
@@ -125,9 +136,9 @@ class Board:
             print(''.join(row_display))
         print('\n')
     
-    def draw(self, screen):
+    def draw(self):
         # Draw the 10x10 board
-        screen.fill('#CFE1BB')
+        self.screen.fill('#CFE1BB')
 
         # Define the color map
         color_map = {
@@ -138,8 +149,7 @@ class Board:
             'S': 'black',
             'W': '#88986C',
         }
-        rect_size = screen.get_width() / 12  # Size of each cell
-        padding = 2  # Padding between cells
+        rect_size = self.screen.get_width() / self.board_size  # Size of each cell
 
         # Draw the board
         for row_idx, row in enumerate(self.board):
@@ -147,4 +157,4 @@ class Board:
                 x = col_idx * rect_size
                 y = row_idx * rect_size + self.score_size
                 color = color_map.get(cell, 'white')  # Couleur de la case
-                pg.draw.rect(screen, color, (x, y, rect_size, rect_size))
+                pg.draw.rect(self.screen, color, (x, y, rect_size, rect_size))
