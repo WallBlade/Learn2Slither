@@ -40,9 +40,9 @@ def parse_arguments():
                        action='store_true',
                        help='Enable training mode for AI')
     
-    parser.add_argument('--episodes',
+    parser.add_argument('--iterations',
                        type=int,
-                       default=1000,
+                       default=100,
                        help='Number of episodes for AI training')
     
     return parser.parse_args()

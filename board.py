@@ -144,6 +144,8 @@ class Board:
 
         dangers = self.check_danger(row_cells, col_cells)
         foods = self.check_food(row_cells, col_cells)
+
+        return (*dangers, *foods)
     
     def get_row(self, x, y):
         row = self.board[y]
