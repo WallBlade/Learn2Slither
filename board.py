@@ -134,15 +134,16 @@ class Board:
                 else:
                     row_display.append(f"{Back.BLACK}  {Style.RESET_ALL}")
             print(''.join(row_display))
-        print('\n')
+        # print('\n')
     
     def get_state(self):
         y, x = self.snake[0]
 
         col_cells = self.get_col(x, y)
         row_cells = self.get_row(x, y)
-        print(col_cells)
-        print(row_cells)
+
+        dangers = self.check_danger(row_cells, col_cells)
+        foods = self.check_food(row_cells, col_cells)
     
     def get_row(self, x, y):
         row = self.board[y]
@@ -158,6 +159,61 @@ class Board:
             'south': [self.board[i][x] for i in range(y+1, self.board_size)]
         }
     
+    def check_danger(self, row, col):
+        """
+        Check for danger on adjacent cells
+
+        Encoding:
+        - 0: No danger
+        - 1: Wall or Body collision
+        """
+        dangers = {
+            'north': 0,
+            'south': 0,
+            'east': 0,
+            'west': 0,
+        }
+
+        if col['north'] and col['north'][-1] in ['W', 'S']:
+            dangers['north'] = 1
+        
+        if col['south'] and col['south'][0] in ['W', 'S']:
+            dangers['south'] = 1
+
+        if row['east'] and row['east'][0] in ['W', 'S']:
+            dangers['east'] = 1
+        
+        if row['west'] and row['west'][-1] in ['W', 'S']:
+            dangers['west'] = 1
+
+        return (dangers['north'], dangers['south'], dangers['east'], dangers['west'])
+
+    def _find_closest_food(self, cells):
+        for cell in cells:
+            if cell == 'G':
+                return 1
+            if cell == 'R':
+                return -1
+        return 0
+    
+    def check_food(self, row, col):
+        """
+        Check for closest food in each direction
+
+        Encoding:
+        - 0: No food
+        - 1: Red Apple
+        - -1: Wall or Body collision
+        """
+        foods = {
+            'north': self._find_closest_food(col['north'][::-1]),
+            'south': self._find_closest_food(col['south']),
+            'east': self._find_closest_food(row['east']),
+            'west': self._find_closest_food(row['west'][::-1]),
+        }
+
+        return (foods['north'], foods['south'], foods['east'], foods['west'])
+
     def draw(self):
         # Draw the 10x10 board
         self.screen.fill('#CFE1BB')
