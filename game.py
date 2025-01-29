@@ -16,17 +16,18 @@ class Game:
     def __init__(self, args):
         pg.init()
         self.args = args
-        self.iterations = args.iterations
+        self.sessions = args.sessions
         self.speed = args.speed
-        self.board = Board(args.board_size, args.w, args.h)
+        self.board = Board(args.board_size, args.w)
         self.clock = pg.time.Clock()
         self.running = True
         self.pause = False
         self.selected_option = 0
         self.dt = 0
         self.reward = 0
-        self.score = 0
+        self.score = 3
         self.best_score = 0
+        self.average = self.score
 
     def get_new_direction(self, action):
         """Determine the new direction based on key press."""
@@ -136,7 +137,7 @@ class Game:
         elif plan[target[0]][target[1]] == 'R':
             return -5
         else:
-            return 0.1
+            return -0.1
     
     def draw_menu(self, events):
         # Define menu options
@@ -180,11 +181,11 @@ class Game:
         """
         Render the score on the screen.
         """
-        score_surface = self.board.font.render(f"Score: {self.score}    Best: {self.best_score}", True, (0, 0, 0))
+        score_surface = self.board.font.render(f"Score: {self.score} Best: {self.best_score} Average: {self.average:.2f}", True, (0, 0, 0))
         self.board.screen.blit(score_surface, (10, 15))
     
     def reset_game(self):
-        self.score = 0
+        self.score = 3
         self.board.init_board()
         self.pause = False
         self.running = True
@@ -209,13 +210,13 @@ class Game:
                 self.draw_menu(events)
 
             pg.display.flip()
-            self.dt = self.clock.tick(50) / 1000
+            self.dt = self.clock.tick(self.speed)
     
     def run_ai_mode(self):
         agent = Agent()
+        total_score = 3
 
-        for _ in range(self.iterations):
-            print(f"iteration: {_}")
+        for _ in range(self.sessions):
             if not self.running:
                 self.reset_game()
             while self.running:
@@ -231,7 +232,7 @@ class Game:
                             elif event.key == pg.K_DOWN:
                                 self.speed -= 10
                     state = self.board.get_state()
-                    print(f"State: {state}")
+                    # print(f"State: {state}")
                     # Get the next move from the agent
                     action = agent.take_action(state)
 
@@ -241,9 +242,9 @@ class Game:
                         self.best_score = self.score
                     new_state = self.board.get_state()
                     agent.update_q_table(state, action, self.reward, new_state)
-                    print(f"Score: {self.score}")
+                    # print(f"Score: {self.score}")
 
-                    self.board.print_board()
+                    # self.board.print_board()
                     self.board.draw()
                     self.draw_score()
                 else:
@@ -251,8 +252,15 @@ class Game:
 
                 pg.display.flip()
                 self.dt = self.clock.tick(self.speed)
-        print(f"{GREEN}Training complete in {self.iterations}!")
-        print(f"Best score: {self.best_score}{RESET}")
+            if _ != 0:
+                total_score += self.score
+                self.average = total_score / _
+            print(f"Score: {self.score}")
+            print(f"iteration: {_}")
+            print(f"Average: {self.average}")
+        print(f"{GREEN}Training complete in {self.sessions}!")
+        print(f"Best score: {self.best_score}")
+        print(f"Average score: {self.average}{RESET}")
         pg.quit()
 
     def run_game(self):

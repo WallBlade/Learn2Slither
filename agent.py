@@ -4,19 +4,11 @@ class Agent:
     def __init__(self, sessions=10, save_path='models/default_model.txt'):
         self.sessions = sessions
         self.save_path = save_path
-        self.learning_rate = 0.5
-        self.discount_rate = 0.99
+        self.learning_rate = 0.1
+        self.discount_rate = 0.95
         self.q_table = {}
-        self.epsilon = 0.1
-        self.epsilon_decay = 0.9999
-        self.REWARDS = {
-            'DEATH': -10,      # Snake dies (wall or self collision)
-            'GREEN_APPLE': 10,  # Eat green apple (grow)
-            'RED_APPLE': -5,   # Eat red apple (shrink)
-            'CLOSER': 1,       # Move closer to green apple
-            'FARTHER': -1,     # Move away from green apple
-            'SURVIVE': 0.1     # Small reward for surviving each move
-        }
+        self.epsilon = 0.8
+        self.epsilon_decay = 0.9995
 
     def choose_action(self, values):
         """
@@ -35,7 +27,7 @@ class Agent:
         if state not in self.q_table:
             self.q_table[state] = [0.0, 0.0, 0.0, 0.0]
 
-        print(f"Q-table: {self.q_table[state]}")
+        # print(f"Q-table: {self.q_table[state]}")
 
         return self.choose_action(self.q_table[state])
 

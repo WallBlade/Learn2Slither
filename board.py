@@ -4,13 +4,13 @@ import colorama
 from colorama import Back, Style
 
 class Board:
-    def __init__(self, board_size=12, w=600, h=600):
+    def __init__(self, board_size=12, w=600):
             # Create a 12x12 board filled with empty '0'
             # and surrounded by walls 'W'
             self.board_size = board_size
             self.score_size = 50
-            self.screen = pg.display.set_mode((w, h + self.score_size), pg.NOFRAME)
-            self.font = pg.font.Font('font/PressStart2P-Regular.ttf', 16)
+            self.screen = pg.display.set_mode((w, w + self.score_size), pg.NOFRAME)
+            self.font = pg.font.Font('font/PressStart2P-Regular.ttf', 12)
             self.snake = []
             self.tail = []
             self.init_board()
@@ -118,6 +118,7 @@ class Board:
         - 'S': Snake Body (Blue background)
         - 0: Empty space (Default)
         """
+        print('\n')
         for row in self.board:
             row_display = []
             for cell in row:
@@ -134,7 +135,6 @@ class Board:
                 else:
                     row_display.append(f"{Back.BLACK}  {Style.RESET_ALL}")
             print(''.join(row_display))
-        # print('\n')
     
     def get_state(self):
         y, x = self.snake[0]
