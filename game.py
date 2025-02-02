@@ -18,6 +18,7 @@ class Game:
         self.args = args
         self.sessions = args.sessions
         self.speed = args.speed
+        self.visual = args.visual
         self.board = Board(args.board_size, args.w)
         self.clock = pg.time.Clock()
         self.running = True
@@ -244,13 +245,14 @@ class Game:
                     agent.update_q_table(state, action, self.reward, new_state)
                     # print(f"Score: {self.score}")
 
-                    # self.board.print_board()
-                    self.board.draw()
-                    self.draw_score()
-                else:
+                    if self.visual == 'on':
+                        self.board.draw()
+                        self.draw_score()
+                        self.board.print_board()
+                        pg.display.flip()
+                elif self.pause and self.visual == 'on':
                     self.draw_menu(events)
 
-                pg.display.flip()
                 self.dt = self.clock.tick(self.speed)
             if _ != 0:
                 total_score += self.score

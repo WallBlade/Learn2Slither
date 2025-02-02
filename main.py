@@ -41,6 +41,11 @@ def parse_arguments():
                        default=100,
                        help='Number of episodes for AI training')
     
+    parser.add_argument('-visual',
+                       choices=['on', 'off'],
+                       default='on',
+                       help='Enable visualisation of AI training: on or off')
+    
     return parser.parse_args()
 
 def main():
