@@ -28,9 +28,13 @@ def parse_arguments():
                        help='Game speed (FPS)')
     
     # AI settings
-    parser.add_argument('-model-path',
+    parser.add_argument('-save',
                        type=str,
-                       help='Path to load/save AI model')
+                       help='Path to save AI model')
+
+    parser.add_argument('-load',
+                       type=str,
+                       help='Path to load AI model')
     
     parser.add_argument('-training',
                        action='store_true',

@@ -1,9 +1,10 @@
 import random as rd
+import json
 
 class Agent:
-    def __init__(self, sessions=10, save_path='models/default_model.txt'):
+    def __init__(self, sessions=10, file_path='models/default_model.txt'):
         self.sessions = sessions
-        self.save_path = save_path
+        self.file_path = file_path
         self.learning_rate = 0.1
         self.discount_rate = 0.95
         self.q_table = {}
@@ -56,11 +57,25 @@ class Agent:
     def save_model(self, file_path):
         """
         Save the Q-table to a file.
+        Convert tuple keys to strings for JSON serialization.
         """
-        pass # Implement model saving logic
+        # Convert tuple keys to strings
+        serializable_q_table = {str(k): v for k, v in self.q_table.items()}
+        try:
+            with open(file_path, 'w') as outfile:
+                json.dump(serializable_q_table, outfile)
+        except Exception as e:
+            print(f"Error: {e}")
 
     def load_model(self, file_path):
         """
         Load the Q-table from a file.
+        Convert string keys back to tuples.
         """
-        pass # Implement model loading logic
+        try:
+            with open(file_path, 'r') as infile:
+                string_q_table = json.load(infile)
+                # Convert string keys back to tuples
+                self.q_table = {eval(k): v for k, v in string_q_table.items()}
+        except Exception as e:
+            self.q_table = {}

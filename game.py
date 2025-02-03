@@ -19,6 +19,7 @@ class Game:
         self.sessions = args.sessions
         self.speed = args.speed
         self.visual = args.visual
+        self.file_path = args.save or args.load
         self.board = Board(args.board_size, args.w)
         self.clock = pg.time.Clock()
         self.running = True
@@ -140,9 +141,9 @@ class Game:
         else:
             return -0.1
     
-    def draw_menu(self, events):
+    def draw_menu(self, events, agent):
         # Define menu options
-        menu_options = ['Resume', 'Restart', 'Quit']
+        menu_options = ['Resume', 'Restart', 'Save', 'Quit']
         num_options = len(menu_options)
 
         # Handle events for navigation
@@ -159,6 +160,8 @@ class Game:
                         self.reset_game()
                         return
                     elif self.selected_option == 2:
+                        agent.save_model(self.file_path)
+                    elif self.selected_option == 3:
                         self.running = False
                         pg.quit()
                         sys.exit()
@@ -215,6 +218,8 @@ class Game:
     
     def run_ai_mode(self):
         agent = Agent()
+        if self.args.load:
+            agent.load_model(self.file_path)
         total_score = 3
 
         for _ in range(self.sessions):
@@ -251,7 +256,7 @@ class Game:
                         self.board.print_board()
                         pg.display.flip()
                 elif self.pause and self.visual == 'on':
-                    self.draw_menu(events)
+                    self.draw_menu(events, agent)
 
                 self.dt = self.clock.tick(self.speed)
             if _ != 0:
@@ -260,9 +265,11 @@ class Game:
             print(f"Score: {self.score}")
             print(f"iteration: {_}")
             print(f"Average: {self.average}")
-        print(f"{GREEN}Training complete in {self.sessions}!")
+        print(f"{GREEN}Training complete in {self.sessions} sessions!")
         print(f"Best score: {self.best_score}")
         print(f"Average score: {self.average}{RESET}")
+        if self.args.save:
+            agent.save_model(self.file_path)
         pg.quit()
 
     def run_game(self):

@@ -5,8 +5,6 @@ from colorama import Back, Style
 
 class Board:
     def __init__(self, board_size=12, w=600):
-            # Create a 12x12 board filled with empty '0'
-            # and surrounded by walls 'W'
             self.board_size = board_size
             self.score_size = 50
             self.screen = pg.display.set_mode((w, w + self.score_size), pg.NOFRAME)
@@ -49,7 +47,7 @@ class Board:
 
                 # Place the body segments
                 curr_pos = head_pos
-                for _ in range(2):  # Two body segments
+                for _ in range(2):
                     valid_directions = self.get_adjacent_pos(curr_pos)
                     if valid_directions:
                         # Choose the first valid direction
