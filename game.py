@@ -1,6 +1,6 @@
-# Example file showing a circle moving on screen
+import os
+import sys
 import pygame as pg
-import random as rd
 from agent import Agent
 from state import get_state
 from draw import draw_board, draw_score, draw_menu
@@ -12,6 +12,8 @@ RED = "\033[31m"
 BLUE = "\033[34m"
 RESET = "\033[0m"
 
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
+
 class Game:
     # pygame setup
     def __init__(self, args):
@@ -22,12 +24,14 @@ class Game:
         self.visual = args.visual
         self.file_path = args.save or args.load
         self.board = Board(args.board_size)
+        self.agent = Agent(self.sessions, self.file_path)
         self.clock = pg.time.Clock()
         self.running = True
         self.pause = False
         self.w = args.w
-        self.screen = pg.display.set_mode((self.w, self.w + 50), pg.NOFRAME)
-        self.font = pg.font.Font('font/PressStart2P-Regular.ttf', 12)
+        if self.visual == 'on':
+            self.screen = pg.display.set_mode((self.w, self.w + 50), pg.NOFRAME)
+            self.font = pg.font.Font('font/PressStart2P-Regular.ttf', 12)
         self.selected_option = 0
         self.dt = 0
         self.reward = 0
@@ -156,74 +160,76 @@ class Game:
             events = pg.event.get()
 
             if not self.pause:
-                for event in events:
-                    if event.type == pg.KEYDOWN:
-                        if event.key == pg.K_q or event.key == pg.K_ESCAPE:
-                            self.pause = True
-                        else:
-                            self.move(event, self.board.snake, self.board.plan)
-                        print(f"Score: {self.score}")
-                        self.board.print_board()
+                self.handle_events(events)
 
                 draw_board(self.screen, self.board.plan)
                 draw_score(self.font, self.screen, self.score, self.best_score, self.average)
             else:
-                self.draw_menu(events)
+                draw_menu(self.selected_option, events)
 
             pg.display.flip()
             self.dt = self.clock.tick(self.speed)
     
+    def handle_events(self, events, _):
+        for event in events:
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_q or event.key == pg.K_ESCAPE:
+                    pg.quit()
+                    sys.exit()
+                elif event.key == pg.K_p:
+                    if self.pause:
+                        self.pause = False
+                    else:
+                        self.pause = True
+                elif event.key == pg.K_s and self.args.mode == 'ai':
+                    self.agent.save_model(f'models/{_}sess.json')
+                elif event.key == pg.K_UP:
+                    self.speed += 10
+                elif event.key == pg.K_DOWN:
+                    self.speed -= 10
+                else:
+                    self.move(event, self.board.snake, self.board.plan)
+
     def run_ai_mode(self):
-        agent = Agent(self.sessions, self.file_path)
         if self.args.load:
-            agent.load_model(self.file_path)
+            self.agent.load_model(self.file_path)
         total_score = 3
 
         for _ in range(self.sessions):
-            if not self.running:
-                self.reset_game()
+            self.reset_game()
             while self.running:
                 events = pg.event.get()
 
+                self.handle_events(events, _)
                 if not self.pause:
-                    for event in events:
-                        if event.type == pg.KEYDOWN:
-                            if event.key == pg.K_q or event.key == pg.K_ESCAPE:
-                                self.pause = True
-                            elif event.key == pg.K_UP:
-                                self.speed += 10
-                            elif event.key == pg.K_DOWN:
-                                self.speed -= 10
                     state = get_state(self.board.plan, self.board.snake)
                     # Get the next move from the agent
-                    action = agent.take_action(state)
+                    action = self.agent.take_action(state)
 
                     # Make the move
                     self.move(action, self.board.snake, self.board.plan)
                     if self.score > self.best_score:
                         self.best_score = self.score
                     new_state = get_state(self.board.plan, self.board.snake)
-                    agent.update_q_table(state, action, self.reward, new_state)
+                    self.agent.update_q_table(state, action, self.reward, new_state)
 
                     if self.visual == 'on':
                         draw_board(self.screen, self.board.plan)
                         draw_score(self.font, self.screen, self.score, self.best_score, self.average)
                         pg.display.flip()
-                elif self.pause and self.visual == 'on':
-                    draw_menu(self.selected_option, events, agent)
 
                 self.dt = self.clock.tick(self.speed)
             if _ != 0:
                 total_score += self.score
-                self.average = total_score / _
-            print(f"Score: {self.score}")
-            print(f"iteration: {_}")
-            print(f"Average: {self.average}")
+            # print(f"Score: {self.score}")
+            # print(f"iteration: {_}")
+            # print(f"Average: {self.average}")
+        self.average = total_score / self.sessions
         print(f"{GREEN}Training complete in {self.sessions} sessions!")
         print(f"Best score: {self.best_score}")
-        print(f"Average score: {self.average}{RESET}")
+        print(f"Average score: {self.average:.2f}{RESET}")
         if self.args.save:
-            agent.save_model(self.file_path)
+            self.agent.save_model(self.file_path)
         pg.quit()
 
     def run_game(self):

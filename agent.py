@@ -9,6 +9,7 @@ class Agent:
         self.discount_rate = 0.95
         self.q_table = {}
         self.epsilon = 0.8
+        self.min_epsilon = 0.001
         self.epsilon_decay = 0.9995
 
     def choose_action(self, values):
@@ -19,7 +20,9 @@ class Agent:
         if rd.random() < self.epsilon:
             return rd.randint(0, 3)
         else:
-            return values.index(max(values))
+            max_value = max(values)
+            best_actions = [i for i, v in enumerate(values) if v == max_value]
+            return rd.choice(best_actions)
     
     def take_action(self, state):
         """
@@ -50,7 +53,7 @@ class Agent:
         self.q_table[state][action] = new_q
         
         # Decay epsilon
-        self.epsilon *= self.epsilon_decay
+        self.epsilon = max(self.min_epsilon, self.epsilon * self.epsilon_decay)
 
     def save_model(self, file_path):
         """
