@@ -5,7 +5,7 @@ class Agent:
     def __init__(self, sessions=100, file_path='models/default_model.json'):
         self.sessions = sessions
         self.file_path = file_path
-        self.learning_rate = 0.1
+        self.learning_rate = 0.01
         self.discount_rate = 0.95
         self.q_table = {}
         self.epsilon = 0.8
