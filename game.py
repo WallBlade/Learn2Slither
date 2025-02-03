@@ -2,7 +2,8 @@
 import pygame as pg
 import random as rd
 from agent import Agent
-import sys
+from state import get_state
+from draw import draw_board, draw_score, draw_menu
 
 from board import Board
 
@@ -20,10 +21,13 @@ class Game:
         self.speed = args.speed
         self.visual = args.visual
         self.file_path = args.save or args.load
-        self.board = Board(args.board_size, args.w)
+        self.board = Board(args.board_size)
         self.clock = pg.time.Clock()
         self.running = True
         self.pause = False
+        self.w = args.w
+        self.screen = pg.display.set_mode((self.w, self.w + 50), pg.NOFRAME)
+        self.font = pg.font.Font('font/PressStart2P-Regular.ttf', 12)
         self.selected_option = 0
         self.dt = 0
         self.reward = 0
@@ -141,53 +145,6 @@ class Game:
         else:
             return -0.1
     
-    def draw_menu(self, events, agent):
-        # Define menu options
-        menu_options = ['Resume', 'Restart', 'Save', 'Quit']
-        num_options = len(menu_options)
-
-        # Handle events for navigation
-        for event in events:
-            if event.type == pg.KEYDOWN:
-                if event.key == pg.K_UP:
-                    self.selected_option = (self.selected_option - 1) % num_options
-                elif event.key == pg.K_DOWN:
-                    self.selected_option = (self.selected_option + 1) % num_options
-                elif event.key == pg.K_RETURN:
-                    if self.selected_option == 0:
-                        self.pause = False
-                    elif self.selected_option == 1:
-                        self.reset_game()
-                        return
-                    elif self.selected_option == 2:
-                        agent.save_model(self.file_path)
-                    elif self.selected_option == 3:
-                        self.running = False
-                        pg.quit()
-                        sys.exit()
-
-        self.board.screen.fill('#CFE1BB')
-
-        for i, option in enumerate(menu_options):
-            # Highlight the selected option
-            if i == self.selected_option:
-                color = '#738357'  # Selected
-            else:
-                color = '#000000'  # Unselected
-
-            text = self.board.font.render(option, True, color)
-            self.board.screen.blit(text, (100, 50 + i * 50))
-
-        # Update the display
-        pg.display.flip()
-    
-    def draw_score(self):
-        """
-        Render the score on the screen.
-        """
-        score_surface = self.board.font.render(f"Score: {self.score} Best: {self.best_score} Average: {self.average:.2f}", True, (0, 0, 0))
-        self.board.screen.blit(score_surface, (10, 15))
-    
     def reset_game(self):
         self.score = 3
         self.board.init_board()
@@ -204,12 +161,12 @@ class Game:
                         if event.key == pg.K_q or event.key == pg.K_ESCAPE:
                             self.pause = True
                         else:
-                            self.move(event, self.board.snake, self.board.board)
+                            self.move(event, self.board.snake, self.board.plan)
                         print(f"Score: {self.score}")
-                        self.board.print_board()    
+                        self.board.print_board()
 
-                self.board.draw()
-                self.draw_score()
+                draw_board(self.screen, self.board.plan)
+                draw_score(self.font, self.screen, self.score, self.best_score, self.average)
             else:
                 self.draw_menu(events)
 
@@ -217,7 +174,7 @@ class Game:
             self.dt = self.clock.tick(self.speed)
     
     def run_ai_mode(self):
-        agent = Agent()
+        agent = Agent(self.sessions, self.file_path)
         if self.args.load:
             agent.load_model(self.file_path)
         total_score = 3
@@ -237,26 +194,23 @@ class Game:
                                 self.speed += 10
                             elif event.key == pg.K_DOWN:
                                 self.speed -= 10
-                    state = self.board.get_state()
-                    # print(f"State: {state}")
+                    state = get_state(self.board.plan, self.board.snake)
                     # Get the next move from the agent
                     action = agent.take_action(state)
 
                     # Make the move
-                    self.move(action, self.board.snake, self.board.board)
+                    self.move(action, self.board.snake, self.board.plan)
                     if self.score > self.best_score:
                         self.best_score = self.score
-                    new_state = self.board.get_state()
+                    new_state = get_state(self.board.plan, self.board.snake)
                     agent.update_q_table(state, action, self.reward, new_state)
-                    # print(f"Score: {self.score}")
 
                     if self.visual == 'on':
-                        self.board.draw()
-                        self.draw_score()
-                        self.board.print_board()
+                        draw_board(self.screen, self.board.plan)
+                        draw_score(self.font, self.screen, self.score, self.best_score, self.average)
                         pg.display.flip()
                 elif self.pause and self.visual == 'on':
-                    self.draw_menu(events, agent)
+                    draw_menu(self.selected_option, events, agent)
 
                 self.dt = self.clock.tick(self.speed)
             if _ != 0:

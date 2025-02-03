@@ -2,7 +2,7 @@ import random as rd
 import json
 
 class Agent:
-    def __init__(self, sessions=10, file_path='models/default_model.txt'):
+    def __init__(self, sessions=100, file_path='models/default_model.json'):
         self.sessions = sessions
         self.file_path = file_path
         self.learning_rate = 0.1
@@ -27,8 +27,6 @@ class Agent:
         """
         if state not in self.q_table:
             self.q_table[state] = [0.0, 0.0, 0.0, 0.0]
-
-        # print(f"Q-table: {self.q_table[state]}")
 
         return self.choose_action(self.q_table[state])
 
@@ -59,7 +57,6 @@ class Agent:
         Save the Q-table to a file.
         Convert tuple keys to strings for JSON serialization.
         """
-        # Convert tuple keys to strings
         serializable_q_table = {str(k): v for k, v in self.q_table.items()}
         try:
             with open(file_path, 'w') as outfile:
