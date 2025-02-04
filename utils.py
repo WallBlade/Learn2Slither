@@ -1,3 +1,5 @@
+import pygame as pg
+
 def get_new_direction(action):
     """Determine the new direction based on key press."""
     DIRECTIONS = {

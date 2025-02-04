@@ -1,6 +1,4 @@
-import pygame as pg
 import random as rd
-import colorama
 from colorama import Back, Style
 
 class Board:

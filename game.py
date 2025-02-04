@@ -1,4 +1,3 @@
-import os
 import sys
 import pygame as pg
 from agent import Agent
@@ -19,7 +18,7 @@ class Game:
         self.sessions = args.sessions
         self.speed = args.speed
         self.visual = args.visual
-        self.learn = args.dontlearn
+        self.learn = not args.dontlearn
         self.file_path = args.save or args.load
         self.board = Board(args.board_size)
         self.agent = Agent(self.sessions, self.file_path)
@@ -111,14 +110,10 @@ class Game:
     def run_human_mode(self):
         while self.running:
             events = pg.event.get()
+            self.handle_events(events, 0)
 
-            if not self.pause:
-                self.handle_events(events)
-
-                draw_board(self.screen, self.board.plan)
-                draw_score(self.font, self.screen, self.score, self.max_length, self.average)
-            else:
-                draw_menu(self.selected_option, events)
+            draw_board(self.screen, self.board.plan)
+            draw_score(self.font, self.screen, self.score, self.max_length)
 
             pg.display.flip()
             self.dt = self.clock.tick(self.speed)
@@ -146,6 +141,9 @@ class Game:
     def run_ai_mode(self):
         """AI game mode."""
         self.load_model_if_needed()
+        if not self.learn:
+            self.agent.epsilon = 0.01
+            self.agent.exploit_only = True
         training_stats = self.run_training_sessions()
         self.save_model_if_needed()
         self.print_final_stats(training_stats)
@@ -203,20 +201,20 @@ class Game:
     def process_ai_move(self):
         """Process AI move and update game state."""
         # Get current state and AI action
-        state = get_state(self.board.plan, self.board.snake, True)
+        state = get_state(self.board.plan, self.board.snake, False)
         action = self.agent.take_action(state)
         
         # Execute move
         reward = self.move(action, self.board.snake, self.board.plan)
-        
-        if not self.learn:
-            # Update AI model
-            new_state = get_state(self.board.plan, self.board.snake)
-            self.agent.update_q_table(state, action, reward, new_state)
 
         # Update best score if needed
         if self.score > self.max_length:
             self.max_length = self.score
+
+        if self.learn:
+            # Update AI model
+            new_state = get_state(self.board.plan, self.board.snake)
+            self.agent.update_q_table(state, action, reward, new_state)
         
         # Handle visualization if enabled
         self.update_display()
@@ -228,7 +226,7 @@ class Game:
         if self.visual == 'on':
             draw_board(self.screen, self.board.plan)
             draw_score(self.font, self.screen, self.score, 
-                      self.max_length, self.average)
+                      self.max_length)
             pg.display.flip()
         self.dt = self.clock.tick(self.speed)
 

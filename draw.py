@@ -59,9 +59,9 @@ def draw_menu(selected_option, events, agent, screen, font, pause, running, file
     # Update the display
     pg.display.flip()
     
-def draw_score(font, screen, score, best_score, average):
+def draw_score(font, screen, score, best_score):
     """
     Render the score on the screen.
     """
-    score_surface = font.render(f"Score: {score} Best: {best_score} Average: {average:.2f}", True, (0, 0, 0))
+    score_surface = font.render(f"Score: {score} Best: {best_score}", True, (0, 0, 0))
     screen.blit(score_surface, (10, 15))

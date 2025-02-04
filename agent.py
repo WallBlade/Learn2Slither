@@ -3,7 +3,7 @@ import json
 import random as rd
 
 class Agent:
-    def __init__(self, sessions=100, file_path='models/default_model.json'):
+    def __init__(self, sessions, file_path):
         self.sessions = sessions
         self.file_path = file_path
         self.learning_rate = 0.01
@@ -12,18 +12,20 @@ class Agent:
         self.epsilon = 0.8
         self.min_epsilon = 0.001
         self.epsilon_decay = 0.9995
+        self.exploit_only = False
 
     def choose_action(self, values):
         """
         Choose an action based on the current state.
         Use an epsilon-greedy approach.
         """
-        if rd.random() < self.epsilon:
-            return rd.randint(0, 3)
-        else:
+        if self.exploit_only or rd.random() > self.epsilon:
             max_value = max(values)
             best_actions = [i for i, v in enumerate(values) if v == max_value]
             return rd.choice(best_actions)
+        else:
+            return rd.randint(0, 3)
+            
     
     def take_action(self, state):
         """
@@ -32,7 +34,14 @@ class Agent:
         if state not in self.q_table:
             self.q_table[state] = [0.0, 0.0, 0.0, 0.0]
 
-        return self.choose_action(self.q_table[state])
+        action = self.choose_action(self.q_table[state])
+
+        if self.exploit_only:
+            print(f"State: {state}")
+            print(f"Q-values: {self.q_table[state]}")
+            print(f"Chosen action: {action}")
+
+        return action
 
     def update_q_table(self, state, action, reward, new_state):
         """
