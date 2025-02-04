@@ -19,6 +19,7 @@ class Game:
         self.sessions = args.sessions
         self.speed = args.speed
         self.visual = args.visual
+        self.learn = args.dontlearn
         self.file_path = args.save or args.load
         self.board = Board(args.board_size)
         self.agent = Agent(self.sessions, self.file_path)
@@ -143,19 +144,19 @@ class Game:
                     self.move(event, self.board.snake, self.board.plan)
 
     def run_ai_mode(self):
-        """Main entry point for AI game mode."""
+        """AI game mode."""
         self.load_model_if_needed()
         training_stats = self.run_training_sessions()
         self.save_model_if_needed()
         self.print_final_stats(training_stats)
 
     def load_model_if_needed(self):
-        """Load the AI model if specified in arguments."""
+        """Load model"""
         if self.args.load:
             self.agent.load_model(self.file_path)
 
     def save_model_if_needed(self):
-        """Save the AI model if specified in arguments."""
+        """Save model"""
         if self.args.save:
             self.agent.save_model(self.file_path)
 
@@ -190,7 +191,7 @@ class Game:
         return session_stats
 
     def handle_game_tick(self, session):
-        """Process a single game tick. Returns False if game should end."""
+        """Process a single game tick."""
         events = pg.event.get()
         self.handle_events(events, session)
         
@@ -208,13 +209,14 @@ class Game:
         # Execute move
         reward = self.move(action, self.board.snake, self.board.plan)
         
+        if not self.learn:
+            # Update AI model
+            new_state = get_state(self.board.plan, self.board.snake)
+            self.agent.update_q_table(state, action, reward, new_state)
+
         # Update best score if needed
         if self.score > self.max_length:
             self.max_length = self.score
-            
-        # Update AI model
-        new_state = get_state(self.board.plan, self.board.snake)
-        self.agent.update_q_table(state, action, reward, new_state)
         
         # Handle visualization if enabled
         self.update_display()

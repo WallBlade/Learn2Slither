@@ -36,7 +36,7 @@ def parse_arguments():
                        type=str,
                        help='Path to load AI model')
     
-    parser.add_argument('-training',
+    parser.add_argument('-dontlearn',
                        action='store_true',
                        help='Enable training mode for AI')
     
