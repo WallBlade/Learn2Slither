@@ -1,5 +1,6 @@
-import random as rd
+import sys
 import json
+import random as rd
 
 class Agent:
     def __init__(self, sessions=100, file_path='models/default_model.json'):
@@ -64,8 +65,10 @@ class Agent:
         try:
             with open(file_path, 'w') as outfile:
                 json.dump(serializable_q_table, outfile)
+            print(f"Save trained model to {file_path}")
         except Exception as e:
             print(f"Error: {e}")
+            sys.exit(1)
 
     def load_model(self, file_path):
         """
@@ -77,5 +80,7 @@ class Agent:
                 string_q_table = json.load(infile)
                 # Convert string keys back to tuples
                 self.q_table = {eval(k): v for k, v in string_q_table.items()}
+                print(f"Load trained model from {file_path}")
         except Exception as e:
-            self.q_table = {}
+            print(f"Error: {e}")
+            sys.exit(1)

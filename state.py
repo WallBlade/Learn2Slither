@@ -1,4 +1,4 @@
-def get_state(plan, snake):
+def get_state(plan, snake, print=False):
     """
     Get the state of the snake from its head in each direction
     """
@@ -9,6 +9,8 @@ def get_state(plan, snake):
 
     dangers = check_danger(row_cells, col_cells)
     foods = check_food(row_cells, col_cells)
+    if print:
+        print_state(col_cells, plan[y], len(row_cells['west']))
 
     return (*dangers, *foods)
     
@@ -80,3 +82,13 @@ def check_food(row, col):
     }
 
     return (foods['north'], foods['south'], foods['east'], foods['west'])
+
+def print_state(col_cells, row, distance):
+    def print_column(cells, indent):
+        for cell in cells:
+            print(' ' * indent + str(cell))
+    
+    print_column(col_cells['north'], distance)
+    print(''.join(str(x) for x in row))
+    print_column(col_cells['south'], distance)
+    print()

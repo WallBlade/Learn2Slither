@@ -4,8 +4,8 @@ import colorama
 from colorama import Back, Style
 
 class Board:
-    def __init__(self, board_size=12):
-            self.board_size = board_size
+    def __init__(self, board_size):
+            self.board_size = board_size + 2
             self.snake = []
             self.tail = []
             self.init_board()

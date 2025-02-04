@@ -2,20 +2,17 @@ import os
 import sys
 import pygame as pg
 from agent import Agent
+from board import Board
 from state import get_state
 from draw import draw_board, draw_score, draw_menu
-
-from board import Board
+from utils import get_new_direction, is_valid_move, get_reward
 
 GREEN = "\033[32m"
 RED = "\033[31m"
 BLUE = "\033[34m"
 RESET = "\033[0m"
 
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
-
 class Game:
-    # pygame setup
     def __init__(self, args):
         pg.init()
         self.args = args
@@ -29,48 +26,12 @@ class Game:
         self.running = True
         self.pause = False
         self.w = args.w
+        self.score = 3
+        self.max_length = 3
+        self.average = self.score
         if self.visual == 'on':
             self.screen = pg.display.set_mode((self.w, self.w + 50), pg.NOFRAME)
             self.font = pg.font.Font('font/PressStart2P-Regular.ttf', 12)
-        self.selected_option = 0
-        self.dt = 0
-        self.reward = 0
-        self.score = 3
-        self.best_score = 0
-        self.average = self.score
-
-    def get_new_direction(self, action):
-        """Determine the new direction based on key press."""
-        DIRECTIONS = {
-            'UP': (-1, 0),
-            'DOWN': (1, 0),
-            'LEFT': (0, -1),
-            'RIGHT': (0, 1)
-        }
-
-        if isinstance(action, int):
-            return {
-                0: DIRECTIONS['UP'],
-                1: DIRECTIONS['DOWN'],
-                2: DIRECTIONS['RIGHT'],
-                3: DIRECTIONS['LEFT']
-            }.get(action, None)
-
-        if hasattr(action, 'key'):
-            return {
-                pg.K_w: DIRECTIONS['UP'],
-                pg.K_s: DIRECTIONS['DOWN'],
-                pg.K_d: DIRECTIONS['RIGHT'],
-                pg.K_a: DIRECTIONS['LEFT']
-            }.get(action.key, None)
-        
-        return None
-
-    def is_valid_move(self, snake, new_target):
-        """Check if the move is valid (not reversing into self)."""
-        if len(snake) == 1:
-            return
-        return new_target == snake[1]
 
     def handle_collision(self, plan, new_y, new_x, snake):
         """Handle different types of collisions and board interactions."""
@@ -113,7 +74,7 @@ class Game:
     def move(self, action, snake, plan):
         """Main move method coordinating snake movement."""
         # Get new direction
-        new_dir = self.get_new_direction(action)
+        new_dir = get_new_direction(action)
         if new_dir is None:
             return
 
@@ -121,11 +82,11 @@ class Game:
         head = snake[0]
         y, x = head
         target = (y + new_dir[0], x + new_dir[1])
-        self.reward = self.get_reward(plan, target)
+        reward = get_reward(plan, target)
 
         # Validate move
-        if self.is_valid_move(snake, target):
-            return
+        if is_valid_move(snake, target):
+            return reward
 
         # Replace old head with body
         plan[y][x] = 'S'
@@ -137,17 +98,8 @@ class Game:
         # Handle collision and movement
         if self.handle_collision(plan, new_y, new_x, snake):
             self.update_snake_position(plan, snake, new_y, new_x)
-    
-    def get_reward(self, plan, target):
-        """Calculate the reward for the current move."""
-        if plan[target[0]][target[1]] == 'W' or plan[target[0]][target[1]] == 'S':
-            return -10
-        elif plan[target[0]][target[1]] == 'G':
-            return 10
-        elif plan[target[0]][target[1]] == 'R':
-            return -5
-        else:
-            return -0.1
+        
+        return reward
     
     def reset_game(self):
         self.score = 3
@@ -163,7 +115,7 @@ class Game:
                 self.handle_events(events)
 
                 draw_board(self.screen, self.board.plan)
-                draw_score(self.font, self.screen, self.score, self.best_score, self.average)
+                draw_score(self.font, self.screen, self.score, self.max_length, self.average)
             else:
                 draw_menu(self.selected_option, events)
 
@@ -191,49 +143,113 @@ class Game:
                     self.move(event, self.board.snake, self.board.plan)
 
     def run_ai_mode(self):
+        """Main entry point for AI game mode."""
+        self.load_model_if_needed()
+        training_stats = self.run_training_sessions()
+        self.save_model_if_needed()
+        self.print_final_stats(training_stats)
+
+    def load_model_if_needed(self):
+        """Load the AI model if specified in arguments."""
         if self.args.load:
             self.agent.load_model(self.file_path)
-        total_score = 3
 
-        for _ in range(self.sessions):
-            self.reset_game()
-            while self.running:
-                events = pg.event.get()
-
-                self.handle_events(events, _)
-                if not self.pause:
-                    state = get_state(self.board.plan, self.board.snake)
-                    # Get the next move from the agent
-                    action = self.agent.take_action(state)
-
-                    # Make the move
-                    self.move(action, self.board.snake, self.board.plan)
-                    if self.score > self.best_score:
-                        self.best_score = self.score
-                    new_state = get_state(self.board.plan, self.board.snake)
-                    self.agent.update_q_table(state, action, self.reward, new_state)
-
-                    if self.visual == 'on':
-                        draw_board(self.screen, self.board.plan)
-                        draw_score(self.font, self.screen, self.score, self.best_score, self.average)
-                        pg.display.flip()
-
-                self.dt = self.clock.tick(self.speed)
-            if _ != 0:
-                total_score += self.score
-            # print(f"Score: {self.score}")
-            # print(f"iteration: {_}")
-            # print(f"Average: {self.average}")
-        self.average = total_score / self.sessions
-        print(f"{GREEN}Training complete in {self.sessions} sessions!")
-        print(f"Best score: {self.best_score}")
-        print(f"Average score: {self.average:.2f}{RESET}")
+    def save_model_if_needed(self):
+        """Save the AI model if specified in arguments."""
         if self.args.save:
             self.agent.save_model(self.file_path)
-        pg.quit()
+
+    def run_training_sessions(self):
+        """Run all training sessions and return statistics."""
+        print(f"{BLUE}Training in progress...{RESET}")
+        
+        stats = {
+            'total_score': 3,
+            'max_length': self.max_length,
+            'max_duration': 0
+        }
+        
+        for session in range(self.sessions):
+            session_stats = self.run_single_session(session)
+            self.update_training_stats(stats, session_stats, session)
+            stats['average'] = stats['total_score'] / self.sessions
+            
+        return stats
+
+    def run_single_session(self, session):
+        """Run a single training session."""
+        self.reset_game()
+        session_stats = {'duration': 0}
+        
+        while self.running:
+            session_stats['duration'] += 1
+            
+            if not self.handle_game_tick(session):
+                break
+                
+        return session_stats
+
+    def handle_game_tick(self, session):
+        """Process a single game tick. Returns False if game should end."""
+        events = pg.event.get()
+        self.handle_events(events, session)
+        
+        if self.pause:
+            return True
+            
+        return self.process_ai_move()
+
+    def process_ai_move(self):
+        """Process AI move and update game state."""
+        # Get current state and AI action
+        state = get_state(self.board.plan, self.board.snake, True)
+        action = self.agent.take_action(state)
+        
+        # Execute move
+        reward = self.move(action, self.board.snake, self.board.plan)
+        
+        # Update best score if needed
+        if self.score > self.max_length:
+            self.max_length = self.score
+            
+        # Update AI model
+        new_state = get_state(self.board.plan, self.board.snake)
+        self.agent.update_q_table(state, action, reward, new_state)
+        
+        # Handle visualization if enabled
+        self.update_display()
+        
+        return True
+
+    def update_display(self):
+        """Update game display if visualization is enabled."""
+        if self.visual == 'on':
+            draw_board(self.screen, self.board.plan)
+            draw_score(self.font, self.screen, self.score, 
+                      self.max_length, self.average)
+            pg.display.flip()
+        self.dt = self.clock.tick(self.speed)
+
+    def update_training_stats(self, stats, session_stats, session):
+        """Update overall training statistics with session results."""
+        if session != 0:
+            stats['total_score'] += self.score
+        stats['max_duration'] = max(stats['max_duration'], 
+                                  session_stats['duration'])
+
+    def print_final_stats(self, stats):
+        """Print final training statistics."""
+        print(
+            f"{GREEN}Game over, "
+            f"max length = {self.max_length}, "
+            f"average length = {stats['average']}, "
+            f"max duration = {stats['max_duration']}"
+            f"{RESET}"
+        )
 
     def run_game(self):
         if self.args.mode == 'human':
             self.run_human_mode()
         else:
             self.run_ai_mode()
+        pg.quit()
