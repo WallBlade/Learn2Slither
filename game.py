@@ -22,6 +22,7 @@ class Game:
         self.file_path = args.save or args.load
         self.board = Board(args.board_size)
         self.agent = Agent(self.sessions, self.file_path)
+        self.direction = self.board.direction
         self.clock = pg.time.Clock()
         self.running = True
         self.pause = False
@@ -78,6 +79,9 @@ class Game:
         if new_dir is None:
             return
 
+        # Track direction
+        self.direction = new_dir
+
         # Calculate new position
         head = snake[0]
         y, x = head
@@ -85,7 +89,7 @@ class Game:
         reward = get_reward(plan, target)
 
         # Validate move
-        if is_valid_move(snake, target):
+        if is_valid_move(snake, target) and self.args.mode == 'human':
             return reward
 
         # Replace old head with body
@@ -101,13 +105,14 @@ class Game:
         
         return reward
     
-    def reset_game(self):
+    def init_game(self):
         self.score = 3
         self.board.init_board()
         self.pause = False
         self.running = True
 
     def run_human_mode(self):
+        self.init_game()
         while self.running:
             events = pg.event.get()
             self.handle_events(events, 0)
@@ -177,7 +182,7 @@ class Game:
 
     def run_single_session(self, session):
         """Run a single training session."""
-        self.reset_game()
+        self.init_game()
         session_stats = {'duration': 0}
         
         while self.running:
@@ -202,10 +207,11 @@ class Game:
         """Process AI move and update game state."""
         # Get current state and AI action
         state = get_state(self.board.plan, self.board.snake, False)
-        action = self.agent.take_action(state)
+        action = self.agent.take_action(state, self.direction)
         
         # Execute move
         reward = self.move(action, self.board.snake, self.board.plan)
+        # self.board.print_board()
 
         # Update best score if needed
         if self.score > self.max_length:

@@ -2,6 +2,11 @@ import sys
 import json
 import random as rd
 
+GREEN = "\033[32m"
+RED = "\033[31m"
+BLUE = "\033[34m"
+RESET = "\033[0m"
+
 class Agent:
     def __init__(self, sessions, file_path):
         self.sessions = sessions
@@ -9,7 +14,7 @@ class Agent:
         self.learning_rate = 0.01
         self.discount_rate = 0.95
         self.q_table = {}
-        self.epsilon = 0.8
+        self.epsilon = 0.1
         self.min_epsilon = 0.001
         self.epsilon_decay = 0.9995
         self.exploit_only = False
@@ -19,15 +24,22 @@ class Agent:
         Choose an action based on the current state.
         Use an epsilon-greedy approach.
         """
-        if self.exploit_only or rd.random() > self.epsilon:
+        if self.exploit_only and rd.random() > self.epsilon:
+            # print(f"{BLUE}Exploiting...{RESET}")
+            max_value = max(values)
+            best_actions = [i for i, v in enumerate(values) if v == max_value]
+            return rd.choice(best_actions)
+        elif not self.exploit_only and rd.random() > self.epsilon:
+            # print(f"{RED}Exploiting...{RESET}")
             max_value = max(values)
             best_actions = [i for i, v in enumerate(values) if v == max_value]
             return rd.choice(best_actions)
         else:
+            # print(f"{GREEN}Exploring...{RESET}")
             return rd.randint(0, 3)
             
     
-    def take_action(self, state):
+    def take_action(self, state, direction):
         """
         Take an action and return the next state and reward.
         """
@@ -36,10 +48,10 @@ class Agent:
 
         action = self.choose_action(self.q_table[state])
 
-        if self.exploit_only:
-            print(f"State: {state}")
-            print(f"Q-values: {self.q_table[state]}")
-            print(f"Chosen action: {action}")
+        # if self.exploit_only:
+        #     print(f"State: {state}")
+        #     print(f"Q-values: {self.q_table[state]}")
+        #     print(f"Chosen action: {action}")
 
         return action
 

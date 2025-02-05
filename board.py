@@ -26,6 +26,25 @@ class Board:
         self.place_buff()
         self.place_buff()
         self.place_debuff()
+        self.direction = self.get_direction(self.snake[0], self.snake[1])
+
+    def print_board(self):
+        for row in self.plan:
+            row_display = []
+            for cell in row:
+                if cell == 'W':
+                    row_display.append(f"{Back.WHITE}  {Style.RESET_ALL}")
+                elif cell == 'H':
+                    row_display.append(f"{Back.GREEN}  {Style.RESET_ALL}")
+                elif cell == 'G':
+                    row_display.append(f"{Back.YELLOW}  {Style.RESET_ALL}")
+                elif cell == 'R':
+                    row_display.append(f"{Back.RED}  {Style.RESET_ALL}")
+                elif cell == 'S':
+                    row_display.append(f"{Back.BLUE}  {Style.RESET_ALL}")
+                else:
+                    row_display.append(f"{Back.BLACK}  {Style.RESET_ALL}")
+            print(''.join(row_display))
 
     def place_snake(self):
         while True:
@@ -79,7 +98,17 @@ class Board:
                 valid_positions.append((dy, dx))
 
         return valid_positions
-        
+    
+    def get_direction(self, head, neck):
+        """
+        Get the direction of the snake based on the head and neck positions.
+        Returns a tuple (dy, dx).
+        """
+        y_diff = head[0] - neck[0]
+        x_diff = head[1] - neck[1]
+
+        return (y_diff, x_diff)
+
     def place_buff(self):
         # Place one buff randomly on the board
         while True:

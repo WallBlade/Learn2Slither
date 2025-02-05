@@ -10,7 +10,7 @@ def draw_board(screen, plan):
         0: '#B6C99B',
         'R': 'red',
         'G': 'green',
-        'H': 'black',
+        'H': 'blue',
         'S': 'black',
         'W': '#88986C',
     }
