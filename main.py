@@ -1,3 +1,4 @@
+import os
 import argparse as ap
 from game import Game
 
@@ -26,6 +27,10 @@ def parse_arguments():
                        type=int,
                        default=50,
                        help='Game speed (FPS)')
+
+    parser.add_argument('-step-by-step',
+                          action='store_true',
+                          help='Enable step-by-step mode for human player')
     
     # AI settings
     parser.add_argument('-save',
@@ -52,8 +57,23 @@ def parse_arguments():
     
     return parser.parse_args()
 
+def create_models_folder():
+    directory_name = 'models'
+
+    try:
+        os.makedirs('models')
+        print(f"Directory '{directory_name}' created successfully.")
+    except FileExistsError:
+        print(f"Directory '{directory_name}' already exists.")
+    except PermissionError:
+        print(f"Permission denied: Unable to create '{directory_name}'.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
 def main():
     args = parse_arguments()
+    if args.save or args.load:
+        create_models_folder()
     game = Game(args)
     game.run_game()
 

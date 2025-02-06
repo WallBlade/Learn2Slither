@@ -14,14 +14,16 @@ def draw_board(screen, plan):
         'S': 'black',
         'W': '#88986C',
     }
-    rect_size = screen.get_width() / len(plan)
+    rect_size = screen.get_width() // len(plan)
+    actual_size = rect_size * len(plan)
+    offset = (screen.get_width() - actual_size) // 2
 
     # Draw the board
     for row_idx, row in enumerate(plan):
         for col_idx, cell in enumerate(row):
-            x = col_idx * rect_size
-            y = row_idx * rect_size + 50
-            color = color_map.get(cell, 'white')
+            x = offset + col_idx * rect_size
+            y = offset + row_idx * rect_size + 50
+            color = color_map.get(cell)
             pg.draw.rect(screen, color, (x, y, rect_size, rect_size))
 
 def draw_menu(selected_option, events, agent, screen, font, pause, running, file_path):

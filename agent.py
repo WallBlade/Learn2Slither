@@ -7,6 +7,7 @@ RED = "\033[31m"
 BLUE = "\033[34m"
 RESET = "\033[0m"
 
+
 class Agent:
     def __init__(self, sessions, file_path):
         self.sessions = sessions
@@ -37,8 +38,7 @@ class Agent:
         else:
             # print(f"{GREEN}Exploring...{RESET}")
             return rd.randint(0, 3)
-            
-    
+
     def take_action(self, state, direction):
         """
         Take an action and return the next state and reward.
@@ -61,7 +61,7 @@ class Agent:
         """
         if new_state not in self.q_table:
             self.q_table[new_state] = [0.0, 0.0, 0.0, 0.0]
-        
+
         new_max = max(self.q_table[new_state])
 
         current_q = self.q_table[state][action]
@@ -70,10 +70,10 @@ class Agent:
         new_q = current_q + self.learning_rate * (
             reward + self.discount_rate * new_max - current_q
         )
-        
+
         # Update Q-value
         self.q_table[state][action] = new_q
-        
+
         # Decay epsilon
         self.epsilon = max(self.min_epsilon, self.epsilon * self.epsilon_decay)
 

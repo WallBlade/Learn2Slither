@@ -26,6 +26,8 @@ class Game:
         self.clock = pg.time.Clock()
         self.running = True
         self.pause = False
+        self.step = args.step_by_step
+        self.waiting = self.step
         self.w = args.w
         self.score = 3
         self.max_length = 3
@@ -130,10 +132,15 @@ class Game:
                     pg.quit()
                     sys.exit()
                 elif event.key == pg.K_p:
-                    if self.pause:
-                        self.pause = False
-                    else:
-                        self.pause = True
+                    self.pause = True
+                    self.step = True
+                    print(f"{RED}Pause: {self.pause}...{RESET}")
+                elif event.key == pg.K_SPACE:
+                    self.waiting = False
+                elif event.key == pg.K_r:
+                    print(f"{GREEN}Resume...{RESET}")
+                    self.step = False
+                    self.waiting = False
                 elif event.key == pg.K_s and self.args.mode == 'ai':
                     self.agent.save_model(f'models/{_}sess.json')
                 elif event.key == pg.K_UP:
@@ -195,13 +202,22 @@ class Game:
 
     def handle_game_tick(self, session):
         """Process a single game tick."""
-        events = pg.event.get()
-        self.handle_events(events, session)
-        
-        if self.pause:
-            return True
+        self.wait_for_step(session)
             
         return self.process_ai_move()
+
+    def wait_for_step(self, session):
+        """Wait for the space key to be pressed to proceed to the next step."""
+        events = pg.event.get()
+        if self.step:
+            self.waiting = True
+            while self.waiting:
+                events = pg.event.get()
+                self.update_display()
+                self.handle_events(events, session)
+                if not self.waiting:
+                    break
+        self.handle_events(events, session)
 
     def process_ai_move(self):
         """Process AI move and update game state."""
