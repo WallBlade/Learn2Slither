@@ -3,7 +3,7 @@ import pygame as pg
 from agent import Agent
 from board import Board
 from state import get_state
-from draw import draw_board, draw_score, draw_menu
+from draw import draw_board, draw_score
 from utils import get_new_direction, is_valid_move, get_reward
 
 GREEN = "\033[32m"
