@@ -119,7 +119,7 @@ class Game:
             events = pg.event.get()
             self.handle_events(events, 0)
 
-            draw_board(self.screen, self.board.plan)
+            draw_board(self.screen, self.board.plan, self.direction)
             draw_score(self.font, self.screen, self.score, self.max_length)
 
             pg.display.flip()
@@ -246,7 +246,7 @@ class Game:
     def update_display(self):
         """Update game display if visualization is enabled."""
         if self.visual == 'on':
-            draw_board(self.screen, self.board.plan)
+            draw_board(self.screen, self.board.plan, self.direction)
             draw_score(self.font, self.screen, self.score, 
                       self.max_length)
             pg.display.flip()
