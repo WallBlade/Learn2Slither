@@ -1,22 +1,23 @@
 import random as rd
 from colorama import Back, Style
 
+
 class Board:
     def __init__(self, board_size):
-            self.board_size = board_size + 2
-            self.snake = []
-            self.tail = []
-            self.init_board()
-        
+        self.board_size = board_size + 2
+        self.snake = []
+        self.tail = []
+        self.init_board()
+
     def create_plan(self):
         # Create a 12x12 board filled with empty '0'
         # and surrounded by walls 'W'
         board = [['W' if x == 0 or x == self.board_size - 1
-                       or y == 0 or y == self.board_size - 1 
-                   else 0 for x in range(self.board_size)] 
-                  for y in range(self.board_size)]
+                  or y == 0 or y == self.board_size - 1
+                  else 0 for x in range(self.board_size)]
+                 for y in range(self.board_size)]
         return board
-    
+
     def init_board(self):
         # Reset the board to its initial state
         self.plan = self.create_plan()
@@ -33,17 +34,17 @@ class Board:
             row_display = []
             for cell in row:
                 if cell == 'W':
-                    row_display.append(f"{Back.WHITE}  {Style.RESET_ALL}")
+                    row_display.append(f"{Back.WHITE} {Style.RESET_ALL}")
                 elif cell == 'H':
-                    row_display.append(f"{Back.GREEN}  {Style.RESET_ALL}")
+                    row_display.append(f"{Back.GREEN} {Style.RESET_ALL}")
                 elif cell == 'G':
-                    row_display.append(f"{Back.YELLOW}  {Style.RESET_ALL}")
+                    row_display.append(f"{Back.YELLOW} {Style.RESET_ALL}")
                 elif cell == 'R':
-                    row_display.append(f"{Back.RED}  {Style.RESET_ALL}")
+                    row_display.append(f"{Back.RED} {Style.RESET_ALL}")
                 elif cell == 'S':
-                    row_display.append(f"{Back.BLUE}  {Style.RESET_ALL}")
+                    row_display.append(f"{Back.BLUE} {Style.RESET_ALL}")
                 else:
-                    row_display.append(f"{Back.BLACK}  {Style.RESET_ALL}")
+                    row_display.append(f"{Back.BLACK} {Style.RESET_ALL}")
             print(''.join(row_display))
 
     def place_snake(self):
@@ -89,16 +90,20 @@ class Board:
         Returns a list of valid coordinates (x, y).
         """
         y, x = pos
-        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # up, down, left, right
+
+        # up, down, left, right
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
         valid_positions = []
 
         for dy, dx in directions:
             ny, nx = y + dy, x + dx
-            if 1 <= ny < self.board_size and 1 <= nx < self.board_size and self.plan[ny][nx] == 0:
+            if (1 <= ny < self.board_size and
+                1 <= nx < self.board_size and
+                    self.plan[ny][nx] == 0):
                 valid_positions.append((dy, dx))
 
         return valid_positions
-    
+
     def get_direction(self, head, neck):
         """
         Get the direction of the snake based on the head and neck positions.
@@ -117,7 +122,7 @@ class Board:
             if self.plan[buff_x][buff_y] == 0:
                 self.plan[buff_x][buff_y] = 'G'
                 break
-    
+
     def place_debuff(self):
         # Place one debuff randomly on the board
         while True:

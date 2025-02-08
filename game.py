@@ -11,6 +11,7 @@ RED = "\033[31m"
 BLUE = "\033[34m"
 RESET = "\033[0m"
 
+
 class Game:
     def __init__(self, args):
         pg.init()
@@ -19,9 +20,10 @@ class Game:
         self.speed = args.speed
         self.visual = args.visual
         self.learn = not args.dontlearn
-        self.file_path = args.save or args.load
+        self.save_path = args.save
+        self.load_path = args.load
         self.board = Board(args.board_size)
-        self.agent = Agent(self.sessions, self.file_path)
+        self.agent = Agent(self.sessions, self.save_path)
         self.direction = self.board.direction
         self.clock = pg.time.Clock()
         self.running = True
@@ -33,7 +35,8 @@ class Game:
         self.max_length = 3
         self.average = self.score
         if self.visual == 'on':
-            self.screen = pg.display.set_mode((self.w, self.w + 50), pg.NOFRAME)
+            no_frame = pg.NOFRAME
+            self.screen = pg.display.set_mode((self.w, self.w + 50), no_frame)
             self.font = pg.font.Font('font/PressStart2P-Regular.ttf', 12)
 
     def handle_collision(self, plan, new_y, new_x, snake):
@@ -104,9 +107,9 @@ class Game:
         # Handle collision and movement
         if self.handle_collision(plan, new_y, new_x, snake):
             self.update_snake_position(plan, snake, new_y, new_x)
-        
+
         return reward
-    
+
     def init_game(self):
         self.score = 3
         self.board.init_board()
@@ -124,7 +127,7 @@ class Game:
 
             pg.display.flip()
             self.dt = self.clock.tick(self.speed)
-    
+
     def handle_events(self, events, _):
         for event in events:
             if event.type == pg.KEYDOWN:
@@ -147,6 +150,10 @@ class Game:
                     self.speed += 10
                 elif event.key == pg.K_DOWN:
                     self.speed -= 10
+                elif event.key == pg.K_LEFT:
+                    self.speed -= 1
+                elif event.key == pg.K_RIGHT:
+                    self.speed += 1
                 else:
                     self.move(event, self.board.snake, self.board.plan)
 
@@ -162,48 +169,48 @@ class Game:
 
     def load_model_if_needed(self):
         """Load model"""
-        if self.args.load:
-            self.agent.load_model(self.file_path)
+        if self.load_path:
+            self.agent.load_model(self.load_path)
 
     def save_model_if_needed(self):
         """Save model"""
-        if self.args.save:
-            self.agent.save_model(self.file_path)
+        if self.save_path:
+            self.agent.save_model(self.save_path)
 
     def run_training_sessions(self):
         """Run all training sessions and return statistics."""
         print(f"{BLUE}Training in progress...{RESET}")
-        
+
         stats = {
             'total_score': 3,
             'max_length': self.max_length,
             'max_duration': 0
         }
-        
+
         for session in range(self.sessions):
             session_stats = self.run_single_session(session)
             self.update_training_stats(stats, session_stats, session)
             stats['average'] = stats['total_score'] / self.sessions
-            
+
         return stats
 
     def run_single_session(self, session):
         """Run a single training session."""
         self.init_game()
         session_stats = {'duration': 0}
-        
+
         while self.running:
             session_stats['duration'] += 1
-            
+
             if not self.handle_game_tick(session):
                 break
-                
+
         return session_stats
 
     def handle_game_tick(self, session):
         """Process a single game tick."""
         self.wait_for_step(session)
-            
+
         return self.process_ai_move()
 
     def wait_for_step(self, session):
@@ -224,7 +231,7 @@ class Game:
         # Get current state and AI action
         state = get_state(self.board.plan, self.board.snake, False)
         action = self.agent.take_action(state, self.direction)
-        
+
         # Execute move
         reward = self.move(action, self.board.snake, self.board.plan)
         # self.board.print_board()
@@ -237,18 +244,18 @@ class Game:
             # Update AI model
             new_state = get_state(self.board.plan, self.board.snake)
             self.agent.update_q_table(state, action, reward, new_state)
-        
+
         # Handle visualization if enabled
         self.update_display()
-        
+
         return True
 
     def update_display(self):
         """Update game display if visualization is enabled."""
         if self.visual == 'on':
             draw_board(self.screen, self.board.plan, self.direction)
-            draw_score(self.font, self.screen, self.score, 
-                      self.max_length)
+            draw_score(self.font, self.screen, self.score,
+                       self.max_length)
             pg.display.flip()
         self.dt = self.clock.tick(self.speed)
 
@@ -256,8 +263,8 @@ class Game:
         """Update overall training statistics with session results."""
         if session != 0:
             stats['total_score'] += self.score
-        stats['max_duration'] = max(stats['max_duration'], 
-                                  session_stats['duration'])
+        stats['max_duration'] = max(stats['max_duration'],
+                                    session_stats['duration'])
 
     def print_final_stats(self, stats):
         """Print final training statistics."""

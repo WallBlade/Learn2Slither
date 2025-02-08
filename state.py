@@ -13,7 +13,8 @@ def get_state(plan, snake, print=False):
         print_state(col_cells, plan[y], len(row_cells['west']))
 
     return (*dangers, *foods)
-    
+
+
 def get_row(plan, x, y):
     row = plan[y]
 
@@ -22,11 +23,13 @@ def get_row(plan, x, y):
         'east': row[x+1:]
     }
 
+
 def get_col(plan, x, y):
     return {
         'north': [plan[i][x] for i in range(y)],
         'south': [plan[i][x] for i in range(y+1, len(plan))]
     }
+
 
 def check_danger(row, col):
     """
@@ -45,13 +48,13 @@ def check_danger(row, col):
 
     if col['north'] and col['north'][-1] in ['W', 'S']:
         dangers['north'] = 1
-    
+
     if col['south'] and col['south'][0] in ['W', 'S']:
         dangers['south'] = 1
 
     if row['east'] and row['east'][0] in ['W', 'S']:
         dangers['east'] = 1
-    
+
     if row['west'] and row['west'][-1] in ['W', 'S']:
         dangers['west'] = 1
 
@@ -64,6 +67,7 @@ def find_closest_food(cells):
         if cell == 'R':
             return -1
     return 0
+
 
 def check_food(row, col):
     """
@@ -83,11 +87,12 @@ def check_food(row, col):
 
     return (foods['north'], foods['south'], foods['east'], foods['west'])
 
+
 def print_state(col_cells, row, distance):
     def print_column(cells, indent):
         for cell in cells:
             print(' ' * indent + str(cell))
-    
+
     print_column(col_cells['north'], distance)
     print(''.join(str(x) for x in row))
     print_column(col_cells['south'], distance)

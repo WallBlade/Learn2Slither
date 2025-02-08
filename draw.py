@@ -1,7 +1,8 @@
 import pygame as pg
 
+
 def draw_board(screen, plan, direction):
-    screen.fill('#CFE1BB')
+    screen.fill('#EFE1AB')
     background = pg.image.load("textures/l2s-map.png")
     background = scale_background(background, screen.get_width())
     screen.blit(background, (0, 50))
@@ -34,21 +35,31 @@ def draw_board(screen, plan, direction):
             elif cell in scaled_textures:
                 screen.blit(scaled_textures[cell], (x, y))
 
+
 def scale_background(image, screen_size):
     return pg.transform.scale(image, (screen_size, screen_size))
+
 
 def scale_textures(textures, size):
     scaled = {}
     for key, img in textures.items():
         if isinstance(img, dict):
-            scaled[key] = {dir_key: pg.transform.scale(dir_img, (size, size)) for dir_key, dir_img in img.items()}
+            scaled[key] = {
+                dir_key: pg.transform.scale(dir_img, (size, size))
+                for dir_key, dir_img in img.items()
+            }
         else:
             scaled[key] = pg.transform.scale(img, (size, size))
     return scaled
-    
+
+
 def draw_score(font, screen, score, best_score):
     """
     Render the score on the screen.
     """
-    score_surface = font.render(f"Score: {score} Best: {best_score}", True, (0, 0, 0))
-    screen.blit(score_surface, (10, 15))
+    banner = pg.image.load("textures/banner.png")
+    banner = pg.transform.scale(banner, (screen.get_width(), 50))
+    screen.blit(banner, (0, 0))
+    info = f"Score: {score}    Best: {best_score}"
+    score_surface = font.render(info, True, ('#885558'))
+    screen.blit(score_surface, (screen.get_width() / 3, 20))
